@@ -1,3 +1,709 @@
+# Alif25
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ALIF – Campus Literary Arts Fest</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+  /* --- Median UI Theme Variables (White Background) --- */
+  :root {
+    --bg: #ffffff; /* Pure White Background */
+    --surface: #f8f9fa; /* Very Light Grey for content areas */
+    --surface-alt: #f1f5f9;
+    --border: #e9ecef; /* Lighter border */
+    --text-main: #212529; /* Darker text */
+    --text-muted: #6c757d;
+    --primary: #007bff; /* Blue for primary accents */
+    --primary-dark: #0056b3;
+    --accent-gold: #ffc107; /* Yellow/Gold */
+    --danger: #dc3545;
+    --success: #28a745;
+    --radius: 12px; /* Standard radius */
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Soft, consistent shadow */
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
+  
+  body {
+    margin: 0; padding: 0;
+    background-color: var(--surface); /* Use light grey for body */
+    color: var(--text-main);
+    font-family: var(--font-body);
+    font-size: 15px; 
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* --- Layout & Typography --- */
+  h1, h2, h3 { font-family: var(--font-heading); margin: 0; font-weight: 700; color: var(--text-main); }
+  h2 { font-size: 24px; margin-bottom: 1.5rem; color: var(--primary-dark); }
+  h3 { font-size: 18px; }
+  p { color: var(--text-muted); line-height: 1.6; margin: 0 0 1rem 0; }
+  
+  .app-container { max-width: 1400px; margin: 0 auto; width: 100%; padding: 30px 15px; display: flex; gap: 30px; flex: 1; }
+  .sidebar { 
+    width: 250px; flex-shrink: 0; 
+    display: flex; flex-direction: column; gap: 8px; 
+    padding: 10px;
+    background: var(--bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .main-content { flex: 1; overflow-y: auto; }
+
+  /* --- Header --- */
+  header {
+    border-bottom: 1px solid var(--border); padding: 15px 30px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg); position: sticky; top: 0; z-index: 50;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  
+  /* Custom Logo Styling */
+  .logo-circle {
+    width: 40px; height: 40px; background: var(--primary); color: #fff;
+    border-radius: 50%; /* Make it circular */
+    display: grid; place-items: center;
+    font-family: var(--font-heading); font-size: 18px; letter-spacing: 1px;
+    object-fit: cover; /* For uploaded images */
+    border: 2px solid var(--primary-dark);
+  }
+
+  /* --- UI Components --- */
+  .card {
+    background: var(--bg); /* Pure white background for cards */
+    border-radius: var(--radius); padding: 25px; margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .grid { display: grid; gap: 20px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: repeat(3, 1fr); }
+  
+  .btn {
+    padding: 10px 18px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); cursor: pointer; font-weight: 500; font-family: var(--font-body);
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; font-size: 14px;
+  }
+  .btn:hover { background: var(--surface-alt); border-color: #adb5bd; }
+  .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn.primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3); }
+  .btn.danger { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+  .btn.danger:hover { background: #f1b0b7; }
+  .btn.sm { padding: 8px 12px; font-size: 13px; border-radius: 6px; }
+
+  .input, select {
+    width: 100%; padding: 10px; border: 1px solid var(--border);
+    border-radius: 8px; 
+    font-family: var(--font-body); outline: none; transition: 0.2s;
+    background: var(--bg);
+  }
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1); background: var(--bg); }
+  label { font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 5px; display: block; }
+  
+  .tag { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tag.blue { background: #e0f7fa; color: #00bcd4; }
+  .tag.green { background: #e6ffed; color: #43a047; }
+  .tag.gold { background: #fff8e1; color: #ffb300; }
+  .tag.gray { background: #f1f3f5; color: #495057; }
+
+  /* --- Navigation --- */
+  .nav-btn {
+    text-align: left; padding: 12px 15px; border: none; background: transparent;
+    cursor: pointer; border-radius: 8px; color: var(--text-muted); font-weight: 500;
+    font-size: 14px; transition: all 0.2s;
+  }
+  .nav-btn:hover { background: var(--surface-alt); color: var(--text-main); }
+  .nav-btn.active { 
+    background: var(--primary); color: #fff; 
+    box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
+  }
+  .nav-btn.active:hover { background: var(--primary-dark); }
+
+  /* --- Tables --- */
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: var(--primary-dark); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; background: var(--surface-alt); }
+  td { padding: 12px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background-color: var(--surface-alt); }
+
+  /* --- Login Screen --- */
+  .login-wrapper {
+    display: flex; align-items: center; justify-content: center; height: 100%;
+    background: var(--surface);
+  }
+  .login-box { width: 400px; max-width: 90%; }
+  
+  /* --- Result Poster Styling --- */
+  .poster-template { 
+      width: 100%; max-width: 700px; margin: 20px auto; 
+      padding: 40px; border: 1px solid var(--border); 
+      border-radius: var(--radius); background: var(--bg); 
+      box-shadow: var(--shadow);
+      text-align: center;
+  }
+  .champion-box { 
+      padding: 25px; margin: 25px 0; border-radius: var(--radius); 
+      background: #fffbef; border: 2px solid var(--accent-gold);
+      box-shadow: 0 4px 10px rgba(255, 193, 7, 0.2);
+  }
+  .champion-box h3 { font-size: 42px; color: var(--accent-gold); }
+  .secondary-results { display: flex; justify-content: space-around; gap: 15px; margin-top: 20px; }
+  .secondary-results > div { 
+      flex: 1; padding: 15px; border-radius: 8px; 
+      background: var(--surface-alt); border: 1px solid var(--border);
+  }
+  .danger-note { background: #fff3cd; color: #856404; padding: 12px; border-radius: var(--radius); border: 1px dashed #ffeeba; font-size: 13px; }
+
+  /* --- Competition Poster Theme --- */
+  .comp-poster-box {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
+    padding: 60px; text-align: center; border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    max-width: 800px; margin: 30px auto;
+  }
+  .comp-poster-box h1 {
+    font-size: 48px; color: var(--primary-dark); line-height: 1.1; margin-bottom: 5px;
+  }
+  .comp-poster-box h2 {
+    font-size: 24px; color: var(--text-muted); margin-bottom: 30px;
+  }
+  .winner-podium {
+    display: flex; justify-content: center; align-items: flex-end; gap: 20px;
+    margin-top: 40px;
+  }
+  .podium-place {
+    width: 30%; max-width: 200px; padding: 20px 10px; border-radius: 10px 10px 0 0;
+    text-align: center; color: var(--text-main); font-family: var(--font-body);
+    position: relative;
+    transition: all 0.3s;
+  }
+  .podium-place h3 { font-size: 24px; margin-bottom: 5px; font-family: var(--font-heading); }
+  .podium-place p { margin: 0; font-size: 14px; line-height: 1.3; }
+  
+  .place-1 { 
+    height: 200px; background: #fff8e1; border-bottom: 5px solid var(--accent-gold);
+    box-shadow: 0 -4px 15px rgba(255, 193, 7, 0.3);
+  }
+  .place-1 .rank-badge { 
+    background: var(--accent-gold); color: white; width: 40px; height: 40px; line-height: 40px;
+    border-radius: 50%; font-weight: bold; position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    font-size: 20px; border: 3px solid #ffd700;
+  }
+  .place-2 { height: 160px; background: #e9ecef; border-bottom: 5px solid #adb5bd; }
+  .place-3 { height: 130px; background: #f1f3f5; border-bottom: 5px solid #ced4da; }
+  .place-2 .rank-badge, .place-3 .rank-badge {
+    background: var(--primary); color: white; width: 30px; height: 30px; line-height: 30px;
+    border-radius: 50%; font-size: 14px; font-weight: bold; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+  }
+
+  /* --- Print Styles for Reports --- */
+  @media print {
+      body { background-color: #fff !important; }
+      header, .sidebar, .btn, .input, .danger-note, .row > button:not(.print-btn), form { display: none !important; }
+      .app-container { display: block; padding: 0 !important; }
+      .main-content { overflow: visible !important; width: 100%; }
+      .card { box-shadow: none !important; border: none !important; margin-bottom: 0; padding: 15px 0 !important; }
+      table { border-spacing: 0; border-collapse: collapse; }
+      th, td { border: 1px solid #ddd !important; padding: 8px !important; }
+      .section-break { page-break-before: always; }
+      .comp-poster-box { box-shadow: none !important; border: 1px solid #000; page-break-after: always; }
+  }
+
+  /* Logo Upload Utility */
+  .logo-upload-box {
+      border: 1px dashed var(--border); padding: 15px; border-radius: var(--radius);
+      text-align: center; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header id="main-header" style="display:none">
+  <div class="brand">
+    <img id="header-logo" class="logo-circle" src="" alt="A" onerror="this.src=''; this.alt='A'; this.style.backgroundColor='var(--primary)'" style="width:40px; height:40px;">
+    <div>
+      <h3 style="margin:0; font-size:20px; color:var(--primary-dark)">ALIF</h3>
+      <span style="font-size:12px; color:var(--text-muted)">Campus Literary Arts Fest</span>
+    </div>
+  </div>
+  <div class="row">
+    <input class="input sm" style="width:200px" id="global-search" placeholder="🔍 Search All Data..." oninput="App.globalSearch(this.value)">
+    <div id="header-user-info" style="font-size:13px; font-weight:600; color:var(--primary-dark)"></div>
+    <button class="btn sm" onclick="App.logout()">🚪 Logout</button>
+  </div>
+</header>
+
+<div id="app"></div>
+
+<div id="print-area"></div>
+
+<script>
+"use strict";
+
+/* --------------------------------------------------------------------------
+   Store & Data Management
+   -------------------------------------------------------------------------- */
+const Store = {
+  key: "alif_fest_data_v5_alif_final", // Updated version key
+  
+  defaults: () => ({
+    meta: { version: 5 },
+    admin: { username: 'admin', password: 'alif' }, // Default admin password changed
+    teams: [
+        { id: 't1', name: 'ZARQAN', password: '123' },
+        { id: 't2', name: 'ASQALAN', password: '123' },
+        { id: 't3', name: 'ASBAHAN', password: '123' }
+    ],
+    categories: ['LOWER PRIMARY', 'PRIMARY', 'MINOR', 'MAJOR', 'HIGH ZONE', 'POPULAR'],
+    competitions: [], 
+    students: [],     
+    entries: [],      
+    results: [],
+    logo: null,
+    
+    // Chest Card Config (Updated text)
+    chestConfig: {
+        widthCm: 9, heightCm: 13, bgColor: "#ffffff",
+        elements: {
+            qr: { x: 50, y: 35, size: 80, color: "#000000", bold: false, visible: true }, 
+            name: { x: 50, y: 65, size: 16, color: "#000000", bold: true, visible: true },
+            chest: { x: 50, y: 78, size: 28, color: "#007bff", bold: true, visible: true },
+            team: { x: 50, y: 90, size: 12, color: "#555555", bold: false, visible: true },
+            fest: { x: 50, y: 10, size: 18, color: "#0056b3", bold: true, text:"ALIF Fest", visible: true }
+        }
+    }
+  }),
+
+  load() {
+    const d = localStorage.getItem(this.key);
+    // Simple migration check for smooth testing/use
+    if (!d && localStorage.getItem("alif_fest_data_v4_felizia")) {
+        let data = JSON.parse(localStorage.getItem("alif_fest_data_v4_felizia"));
+        console.warn("Migrating data from old key to v5 (ALIF final).");
+        data.admin.password = 'alif'; // Ensure password is set to new default on migration
+        data.chestConfig.elements.fest.text = 'ALIF Fest'; // Update fest title
+        return data; 
+    }
+    return d ? JSON.parse(d) : this.defaults();
+  },
+  
+  save(data) {
+    localStorage.setItem(this.key, JSON.stringify(data));
+  },
+  
+  exportJSON(data) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `ALIF_Data_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+  },
+  
+  importJSON(file, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const json = JSON.parse(e.target.result);
+            callback(json);
+        } catch(err) { alert("Invalid JSON file"); }
+    };
+    reader.readAsText(file);
+  }
+};
+
+/* --------------------------------------------------------------------------
+   Application Logic
+   -------------------------------------------------------------------------- */
+const App = {
+  data: Store.load(),
+  state: {
+    user: null, 
+    role: null, 
+    activeTab: 'setup',
+    posterTemplate: 'A',
+    compPosterId: null // New state for Competition Poster selection
+  },
+  
+  init() {
+    if(!localStorage.getItem(Store.key)) Store.save(this.data);
+    this.renderLogin();
+    this.updateLogo();
+  },
+  
+  updateLogo() {
+      const logoEl = document.getElementById("header-logo");
+      if (logoEl && this.data.logo) {
+          logoEl.src = this.data.logo;
+          logoEl.innerText = "";
+          logoEl.style.backgroundColor = 'transparent';
+      } else if (logoEl) {
+          logoEl.src = '';
+          logoEl.innerText = 'A'; // Changed to 'A'
+          logoEl.style.backgroundColor = 'var(--primary)';
+      }
+  },
+
+  /* --- Auth & Layout --- */
+  renderLogin() {
+    document.getElementById("main-header").style.display = "none";
+    document.getElementById("app").innerHTML = `
+      <div class="login-wrapper">
+        <div class="card login-box">
+          <div style="text-align:center; margin-bottom:25px;">
+            <img id="login-logo" class="logo-circle" src="" alt="A" onerror="this.src=''; this.alt='A'; this.style.backgroundColor='var(--primary)'" style="margin:0 auto 10px auto; width:50px; height:50px;">
+            <h1>ALIF Fest Portal</h1>
+            <p>Campus Literary Arts Fest</p>
+          </div>
+          
+          <div class="grid cols-2" style="margin-bottom:15px; gap:10px;">
+             <button class="btn primary" style="flex:1;" onclick="document.getElementById('form-admin').style.display='block';document.getElementById('form-team').style.display='none'">👑 Event Crew</button>
+             <button class="btn" style="flex:1;" onclick="document.getElementById('form-admin').style.display='none';document.getElementById('form-team').style.display='block'">🛡️ Team Portal</button>
+          </div>
+
+          <form id="form-admin" onsubmit="App.loginAdmin(event)">
+            <label>Username</label><input class="input" id="adm-u" value="${this.data.admin.username}" placeholder="Admin Username">
+            <div style="height:10px"></div>
+            <label>Password</label><input class="input" type="password" id="adm-p" value="${this.data.admin.password}" placeholder="Admin Password">
+            <button class="btn primary" style="width:100%; margin-top:20px;">Login as Event Crew</button>
+          </form>
+
+          <form id="form-team" style="display:none" onsubmit="App.loginTeam(event)">
+            <label>Select Team</label>
+            <select class="input" id="team-sel">
+                ${this.data.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+            </select>
+            <div style="height:10px"></div>
+            <label>Password</label><input class="input" type="password" id="team-p">
+            <button class="btn primary" style="width:100%; margin-top:20px;">Login to Team Portal</button>
+          </form>
+
+          <div style="margin-top:20px; font-size:13px; color:var(--text-muted);">
+            <p>Default Admin: ${this.data.admin.username} / ${this.data.admin.password}</p>
+            <p>Default Team: ZARQAN / 123</p>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('form-admin').style.display = 'block';
+    this.updateLogoForLogin('login-logo');
+  },
+  
+  updateLogoForLogin(id) {
+    const logoEl = document.getElementById(id);
+    if (logoEl && this.data.logo) {
+        logoEl.src = this.data.logo;
+        logoEl.innerText = "";
+        logoEl.style.backgroundColor = 'transparent';
+    } else if (logoEl) {
+        logoEl.src = '';
+        logoEl.innerText = 'A'; // Changed to 'A'
+        logoEl.style.backgroundColor = 'var(--primary)';
+    }
+  },
+
+  loginAdmin(e) {
+    e.preventDefault();
+    const u = document.getElementById("adm-u").value;
+    const p = document.getElementById("adm-p").value;
+    if(u === this.data.admin.username && p === this.data.admin.password) {
+        this.state.role = 'admin';
+        this.state.user = 'Administrator';
+        this.state.activeTab = 'setup';
+        this.loadLayout();
+    } else { alert("Invalid Credentials"); }
+  },
+
+  loginTeam(e) {
+    e.preventDefault();
+    const tid = document.getElementById("team-sel").value;
+    const pass = document.getElementById("team-p").value;
+    const team = this.data.teams.find(t => t.id === tid);
+    if(team && team.password === pass) {
+        this.state.role = 'team';
+        this.state.user = team;
+        this.state.activeTab = 'students';
+        this.loadLayout();
+    } else { alert("Wrong Password"); }
+  },
+
+  logout() {
+    this.state.role = null;
+    this.state.user = null;
+    this.renderLogin();
+  },
+
+  loadLayout() {
+    document.getElementById("main-header").style.display = "flex";
+    document.getElementById("header-user-info").innerText = this.state.role === 'admin' ? `Crew (${this.data.admin.username})` : `Team ${this.state.user.name}`;
+    this.updateLogo();
+    
+    // New tab definitions
+    const adminTabs = [
+        {id:'setup', lbl:'🛠️ Setup & Data'},
+        {id:'students_report', lbl:'🧑‍🤝‍🧑 Students by Team/Category'}, // New Report Tab 1
+        {id:'entries_report', lbl:'📝 Entries by Competition'}, // New Report Tab 2
+        {id:'comps', lbl:'📋 Competitions'},
+        {id:'judge', lbl:'⚖️ Judge Panel'},
+        {id:'scores', lbl:'🏆 Scoreboard'},
+        {id:'overall_posters', lbl:'🖼️ Overall Poster'}, 
+        {id:'comp_posters', lbl:'🥇 Comp. Posters'}, // New Competition Poster Tab
+        {id:'chest', lbl:'🏷️ Chest Cards'}
+    ];
+    
+    const teamTabs = [
+        {id:'students', lbl:'🧑‍🎓 My Students'},
+        {id:'enroll', lbl:'📝 Enrollment'},
+        {id:'data', lbl:'⚙️ Settings'}
+    ];
+
+    const tabs = this.state.role === 'admin' ? adminTabs : teamTabs;
+
+    document.getElementById("app").innerHTML = `
+      <div class="app-container">
+        <div class="sidebar">
+          ${tabs.map(t => `
+            <button class="nav-btn ${this.state.activeTab === t.id ? 'active' : ''}" 
+             onclick="App.switchTab('${t.id}')">${t.lbl}</button>
+          `).join('')}
+        </div>
+        <div class="main-content" id="content-area"></div>
+      </div>
+    `;
+    this.renderTabContent();
+  },
+
+  switchTab(id) {
+    this.state.activeTab = id;
+    this.loadLayout(); 
+  },
+
+  renderTabContent() {
+    const el = document.getElementById("content-area");
+    const t = this.state.activeTab;
+    
+    if(this.state.role === 'admin') {
+        if(t === 'setup') this.renderAdminSetup(el);
+        if(t === 'students_report') this.renderAdminStudentsReport(el); 
+        if(t === 'entries_report') this.renderAdminEntriesReport(el); 
+        if(t === 'comps') this.renderAdminComps(el);
+        if(t === 'judge') this.renderAdminJudge(el);
+        if(t === 'scores') this.renderAdminScores(el);
+        if(t === 'overall_posters') this.renderAdminOverallPosters(el);
+        if(t === 'comp_posters') this.renderAdminCompPosters(el); 
+        if(t === 'chest') this.renderAdminChest(el);
+    } else {
+        if(t === 'students') this.renderTeamStudents(el);
+        if(t === 'enroll') this.renderTeamEnroll(el);
+        if(t === 'data') this.renderTeamSettings(el);
+    }
+  },
+  
+  /* --- Global Search (Admin Only) --- */
+  globalSearch(q) {
+      if(this.state.role !== 'admin') return;
+      q = q.toLowerCase().trim();
+      const el = document.getElementById("content-area");
+      
+      if (q.length < 2) {
+          el.innerHTML = '<p class="card" style="text-align:center; color:var(--text-muted)">Start typing to search students, competitions, teams, or chest numbers.</p>';
+          return;
+      }
+
+      const teamMap = new Map(this.data.teams.map(t => [t.id, t.name]));
+      const compMap = new Map(this.data.competitions.map(c => [c.id, c.name]));
+      
+      let results = [];
+      
+      // 1. Student Search
+      this.data.students.filter(s => 
+          s.name.toLowerCase().includes(q) || 
+          s.chestNo.includes(q) || 
+          s.category.toLowerCase().includes(q) || 
+          teamMap.get(s.teamId)?.toLowerCase().includes(q)
+      ).slice(0, 10).forEach(s => {
+          results.push({
+              type: 'Student',
+              info: `${s.name} (#${s.chestNo})`,
+              details: `Team: ${teamMap.get(s.teamId)}, Category: ${s.category}`
+          });
+      });
+      
+      // 2. Competition Search
+      this.data.competitions.filter(c => 
+          c.name.toLowerCase().includes(q) || 
+          c.category.toLowerCase().includes(q)
+      ).slice(0, 10).forEach(c => {
+          results.push({
+              type: 'Competition',
+              info: c.name,
+              details: `Category: ${c.category}, ${c.isStage ? 'Stage Item' : 'Non-Stage'}`
+          });
+      });
+      
+      // 3. Team Search
+      this.data.teams.filter(t => t.name.toLowerCase().includes(q)).slice(0, 5).forEach(t => {
+          results.push({
+              type: 'Team',
+              info: t.name,
+              details: `${this.data.students.filter(s => s.teamId === t.id).length} Students Enrolled.`
+          });
+      });
+
+      el.innerHTML = `
+          <h2>🔍 Search Results for "${q}"</h2>
+          <div class="card">
+              ${results.length === 0 
+                  ? '<p style="text-align:center; color:var(--danger)">No results found.</p>' 
+                  : `
+                      <table>
+                          <thead><tr><th>Type</th><th>Info</th><th>Details</th></tr></thead>
+                          <tbody>
+                              ${results.map(r => `
+                                  <tr>
+                                      <td><span class="tag gray">${r.type}</span></td>
+                                      <td><strong>${r.info}</strong></td>
+                                      <td>${r.details}</td>
+                                  </tr>
+                              `).join('')}
+                          </tbody>
+                      </table>
+                  `
+              }
+          </div>
+      `;
+  },
+
+  /* --------------------------------------------------------------------------
+     ADMIN MODULES - REPORTS (Unchanged)
+     -------------------------------------------------------------------------- */
+     
+  renderAdminStudentsReport(el) {
+    const teamMap = new Map(this.data.teams.map(t => [t.id, t]));
+    
+    el.innerHTML = `
+      <div class="row">
+        <h2>🧑‍🤝‍🧑 Students by Team/Category Report</h2>
+        <button class="btn primary print-btn" onclick="App.printReport('students-report-content')">🖨️ Print Report</button>
+      </div>
+      
+      <div class="card" id="students-report-content">
+        ${this.data.teams.map(team => `
+          <div class="team-section" style="margin-bottom: 30px; border-bottom: 2px solid var(--border); padding-bottom: 20px;">
+            <h3 style="color:var(--primary-dark); margin-bottom:15px;">Team: ${team.name} (${this.data.students.filter(s => s.teamId === team.id).length} Students)</h3>
+            <div class="grid cols-3">
+              ${this.data.categories.map(cat => {
+                const students = this.data.students.filter(s => s.teamId === team.id && s.category === cat);
+                if (students.length === 0) return '';
+                return `
+                  <div style="border: 1px solid var(--border); padding: 15px; border-radius: var(--radius); background: var(--surface-alt);">
+                    <h4 style="font-size: 15px; margin-bottom: 10px; color:var(--text-main);"><span class="tag blue">${cat}</span> (${students.length})</h4>
+                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 13px;">
+                      ${students.map(s => `<li>#${s.chestNo} - ${s.name}</li>`).join('')}
+                    </ul>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  },
+  
+  renderAdminEntriesReport(el) {
+    const teamMap = new Map(this.data.teams.map(t => [t.id, t.name]));
+    const studentMap = new Map(this.data.students.map(s => [s.id, s]));
+    
+    el.innerHTML = `
+      <div class="row">
+        <h2>📝 Entries by Competition Report</h2>
+        <button class="btn primary print-btn" onclick="App.printReport('entries-report-content')">🖨️ Print Report</button>
+      </div>
+      
+      <div class="card" id="entries-report-content">
+        ${this.data.competitions.map(comp => {
+          const entries = this.data.entries.filter(e => e.competitionId === comp.id).sort((a, b) => {
+              // Sort by Team Name
+              const teamA = teamMap.get(a.teamId) || '';
+              const teamB = teamMap.get(b.teamId) || '';
+              return teamA.localeCompare(teamB);
+          });
+
+          return `
+            <div class="section-break" style="margin-bottom: 30px; border-bottom: 2px solid var(--primary); padding-bottom: 20px;">
+              <h3 style="color:var(--primary-dark); margin-bottom:5px;">${comp.name}</h3>
+              <p style="margin-top:0; font-size:14px;">Category: <span class="tag blue">${comp.category}</span> | Total Entries: <strong>${entries.length}</strong></p>
+              
+              <table>
+                <thead><tr><th>Team</th><th>Chest No.</th><th>Student Name</th></tr></thead>
+                <tbody>
+                  ${entries.map(e => {
+                    const studentId = e.memberStudentIds[0];
+                    const student = studentMap.get(studentId);
+                    if (!student) return '';
+                    return `
+                      <tr>
+                        <td><strong>${teamMap.get(e.teamId)}</strong></td>
+                        <td>#${student.chestNo}</td>
+                        <td>${student.name}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  },
+  
+  printReport(id) {
+    const content = document.getElementById(id).innerHTML;
+    const pArea = document.getElementById("print-area");
+    
+    const title = id === 'students-report-content' ? 'Students by Team/Category Report' : 'Entries by Competition Report';
+    
+    pArea.innerHTML = `<div style="padding:40px; text-align:center; font-family:var(--font-heading); background:#fff;">
+      <h1 style="font-size:30px; color:var(--primary-dark)">ALIF Fest - ${title}</h1>
+      <p style="color:var(--text-muted)">Generated on ${new Date().toLocaleDateString()}</p>
+      <hr style="border:0; border-top:2px solid var(--border); margin:20px 0;">
+      </div>` + content;
+      
+    window.print();
+  },
+
+  /* --------------------------------------------------------------------------
+     ADMIN MODULES - COMPETITION POSTER (Unchanged)
+     -------------------------------------------------------------------------- */
+  
+  setCompPosterSelection(cid) {
+      this.state.compPosterId = cid;
+      this.renderAdminCompPosters(document.getElementById("content-area"));
+  },
+
+  getCompPosterData(cid) {
+      const results = this.data.results.filter(r => r.competitionId === cid);
+      
+      // Map entries to students and teams
+      const decoratedResults = results.map(r => {
+          const entry = this.data.entries.find(e => e.id === r.entryId);
+          if (!entry || !entry.memberStudentIds[0]) return null;
+          
+          const student = this.data.students.find(s => s.id === entry.memberStudentIds[0]);
           const team = this.data.teams.find(t => t.id === entry.teamId);
           
           if (!student || !team) return null;
@@ -147,10 +853,10 @@
   },
 
   /* --------------------------------------------------------------------------
-     ADMIN MODULES - OVERALL POSTER (Renamed)
+     ADMIN MODULES - OVERALL POSTER (Unchanged)
      -------------------------------------------------------------------------- */
   
-  renderAdminOverallPosters(el) { /* Renamed from renderAdminPosters */
+  renderAdminOverallPosters(el) { 
     const scoreData = this.calculateScoreData();
     const posterHtml = this.getOverallPosterHTML(scoreData, this.state.posterTemplate);
 
@@ -178,7 +884,7 @@
       this.renderAdminOverallPosters(document.getElementById("content-area")); 
   },
   
-  getOverallPosterHTML(data, template) { /* Renamed from getPosterHTML */
+  getOverallPosterHTML(data, template) { 
       const festTitle = this.data.chestConfig.elements.fest.text;
 
       if (template === 'A') {
@@ -235,7 +941,7 @@
       return '<p style="text-align:center;">Select a template above to generate the poster.</p>';
   },
 
-  printOverallPoster() { /* Renamed from printPoster */
+  printOverallPoster() { 
     const content = document.getElementById("overall-poster-area").innerHTML;
     const pArea = document.getElementById("print-area");
     // Add header for print context
@@ -248,7 +954,7 @@
   },
 
   /* --------------------------------------------------------------------------
-     REST OF ADMIN MODULES (Unchanged functionality, minor adjustments)
+     REST OF ADMIN MODULES (Unchanged functionality)
      -------------------------------------------------------------------------- */
   
   // Reusing existing functions from previous steps...
@@ -310,7 +1016,7 @@
       };
   },
   
-  renderAdminSetup: function(el) { /* Re-used from previous step */
+  renderAdminSetup: function(el) { 
     el.innerHTML = `
       <h2>🛠️ Setup & Data</h2>
       <div class="grid cols-3">
@@ -381,7 +1087,7 @@
       </div>
     `;
   },
-  handleLogoUpload: function(file) { /* Re-used from previous step */
+  handleLogoUpload: function(file) { 
       if (!file) return;
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -393,16 +1099,16 @@
       };
       reader.readAsDataURL(file);
   },
-  removeLogo: function() { /* Re-used from previous step */
+  removeLogo: function() { 
       if (confirm("Are you sure you want to remove the custom logo?")) {
           this.data.logo = null;
           Store.save(this.data);
-          alert("Custom logo removed. Default 'F' will be used.");
+          alert("Custom logo removed. Default 'A' will be used."); // Changed to 'A'
           this.renderTabContent();
           this.updateLogo();
       }
   },
-  addTeamPrompt: function() { /* Re-used from previous step */
+  addTeamPrompt: function() { 
     const name = prompt("Enter new team name:");
     if (!name) return;
     const pass = prompt(`Enter password for team "${name}":`);
@@ -414,7 +1120,7 @@
     Store.save(this.data);
     this.renderAdminSetup(document.getElementById("content-area"));
   },
-  editTeam: function(id) { /* Re-used from previous step */
+  editTeam: function(id) { 
     const team = this.data.teams.find(t => t.id === id);
     if (!team) return;
 
@@ -424,7 +1130,7 @@
     document.getElementById('edit-team-name-display').innerText = team.name;
     document.getElementById('team-edit-modal').style.display = 'block';
   },
-  saveTeamEdit: function(e) { /* Re-used from previous step */
+  saveTeamEdit: function(e) { 
     e.preventDefault();
     const id = document.getElementById('edit-team-id').value;
     const name = document.getElementById('edit-team-name').value;
@@ -439,7 +1145,7 @@
         this.renderTabContent();
     }
   },
-  deleteTeam: function() { /* Re-used from previous step */
+  deleteTeam: function() { 
       if (!confirm("Are you sure you want to delete this team? This will remove all their students and entries.")) return;
       const id = document.getElementById('edit-team-id').value;
       this.data.teams = this.data.teams.filter(t => t.id !== id);
@@ -449,7 +1155,7 @@
       document.getElementById('team-edit-modal').style.display = 'none';
       this.renderTabContent();
   },
-  updateAdminCreds: function(e) { /* Re-used from previous step */
+  updateAdminCreds: function(e) { 
       e.preventDefault();
       this.data.admin.username = document.getElementById("adm-u-new").value;
       this.data.admin.password = document.getElementById("adm-p-new").value;
@@ -458,8 +1164,7 @@
       this.loadLayout();
   },
   
-  // Remaining modules (Comps, Judge, Scores, Chest) are re-used/re-mapped but not repeated here for brevity.
-  renderAdminComps: function(el) { /* Re-used */
+  renderAdminComps: function(el) { 
     el.innerHTML = `
       <div class="row"><h2>📋 Competitions</h2> <div style="flex:1"></div></div>
       <div class="card">
@@ -495,7 +1200,7 @@
       </div>
     `;
   },
-  addComp: function(e) { /* Re-used */
+  addComp: function(e) { 
     e.preventDefault();
     const name = document.getElementById("c-name").value;
     const catSelect = document.getElementById("c-cat").value;
@@ -509,7 +1214,7 @@
     });
     Store.save(this.data); this.renderTabContent();
   },
-  delComp: function(id) { /* Re-used */
+  delComp: function(id) { 
     if(confirm("Delete competition? All related entries and results will also be deleted.")) {
         this.data.competitions = this.data.competitions.filter(c=>c.id!==id);
         this.data.entries = this.data.entries.filter(e=>e.competitionId!==id);
@@ -517,7 +1222,7 @@
         Store.save(this.data); this.renderTabContent();
     }
   },
-  renderAdminJudge: function(el) { /* Re-used */
+  renderAdminJudge: function(el) { 
     el.innerHTML = `<h2>⚖️ Judge Panel</h2><div class="grid cols-3">${
       this.data.competitions.map(c => {
           const entryCount = this.data.entries.filter(e=>e.competitionId===c.id).length;
@@ -532,7 +1237,7 @@
       }).join('')
     }</div>`;
   },
-  openJudging: function(cid) { /* Re-used */
+  openJudging: function(cid) { 
     const comp = this.data.competitions.find(c=>c.id===cid);
     const entries = this.data.entries.filter(e=>e.competitionId===cid);
     
@@ -557,7 +1262,7 @@
       </div>
     `;
   },
-  judgeRow: function(e, compId) { /* Re-used */
+  judgeRow: function(e, compId) { 
     const s = App.data.students.find(x=>x.id === e.memberStudentIds[0]); 
     if(!s) return '';
     const team = App.data.teams.find(t=>t.id === s.teamId);
@@ -572,7 +1277,7 @@
       <td><button class="btn sm primary" onclick="App.saveResult('${e.id}','${compId}', event)">💾 Save</button></td>
     </tr>`;
   },
-  judgeSearch: function(q, cid) { /* Re-used */
+  judgeSearch: function(q, cid) { 
     q = q.toLowerCase();
     const tbody = document.querySelector("#judge-table tbody");
     const entries = App.data.entries.filter(e=>e.competitionId===cid);
@@ -586,7 +1291,7 @@
         return '';
     }).join('');
   },
-  saveResult: function(eid, cid, event) { /* Re-used */
+  saveResult: function(eid, cid, event) { 
     const rank = document.getElementById(`r-${eid}`).value;
     const pts = Number(document.getElementById(`p-${eid}`).value);
     
@@ -605,7 +1310,7 @@
     btn.style.borderColor = "var(--success)";
     setTimeout(()=>{ btn.innerHTML=originalText; btn.style.background=originalBg; btn.style.borderColor="var(--primary)" }, 1000);
   },
-  renderAdminScores: function(el) { /* Re-used */
+  renderAdminScores: function(el) { 
     const data = this.calculateScoreData();
 
     const getRank = (arr, item, key) => {
@@ -674,7 +1379,7 @@
       </div>
     `;
   },
-  printOverallScores: function() { /* Re-used */
+  printOverallScores: function() { 
     const content = document.getElementById("print-content").innerHTML;
     const pArea = document.getElementById("print-area");
     pArea.innerHTML = `<div style="padding:40px; text-align:center; font-family:var(--font-heading); background:#fff;">
@@ -684,7 +1389,7 @@
       </div>` + content;
     window.print();
   },
-  renderAdminChest: function(el) { /* Re-used */
+  renderAdminChest: function(el) { 
     const cfg = this.data.chestConfig;
     
     el.innerHTML = `
@@ -723,7 +1428,7 @@
     `;
     this.renderChestPreview();
   },
-  updateChestCfg: function(path, val) { /* Re-used */
+  updateChestCfg: function(path, val) { 
     const keys = path.split('.');
     let obj = this.data.chestConfig;
     for(let i=0; i<keys.length-1; i++) obj = obj[keys[i]];
@@ -736,7 +1441,7 @@
     Store.save(this.data);
     this.renderChestPreview();
   },
-  renderChestPreview: function(student = {name: "Student Name", chestNo: "101", teamName: "ZARQAN"}) { /* Re-used */
+  renderChestPreview: function(student = {name: "Student Name", chestNo: "101", teamName: "ZARQAN"}) { 
     const cfg = this.data.chestConfig;
     const box = document.getElementById("cc-preview");
     if(!box) return;
@@ -781,7 +1486,7 @@
     createEl('team', student.teamName);
     createEl('qr', `ALIF-${student.chestNo}`);
   },
-  printChestCards: function() { /* Re-used */
+  printChestCards: function() { 
     const cfg = this.data.chestConfig;
     const pArea = document.getElementById("print-area");
     pArea.innerHTML = "";
@@ -810,194 +1515,4 @@
         const card = document.createElement("div");
         card.className = "print-card";
         
-        const els = cfg.elements;
-        const add = (k, html) => {
-            if(!els[k].visible) return;
-            const d = document.createElement("div");
-            d.style.position = "absolute";
-            d.style.top = els[k].y + "%";
-            d.style.left = els[k].x + "%";
-            d.style.transform = "translate(-50%, -50%)";
-            d.style.textAlign = "center";
-            
-            if(k!=='qr') {
-                d.style.fontSize = (els[k].size * 0.7) + "pt"; 
-                d.style.fontWeight = els[k].bold ? "bold" : "normal";
-                d.style.color = els[k].color;
-                d.style.whiteSpace = "nowrap";
-                d.innerText = html;
-            } else {
-                 const qrSizePt = els[k].size * 0.7; 
-                 const qrDiv = document.createElement("div");
-                 qrDiv.style.padding = "2px"; // Padding to ensure QR code prints correctly
-                 new QRCode(qrDiv, { text: `ALIF-${s.chestNo}`, width: qrSizePt, height: qrSizePt, colorDark: els[k].color, colorLight: 'transparent' });
-                 d.appendChild(qrDiv);
-            }
-            card.appendChild(d);
-        };
-        
-        add('fest', els.fest.text);
-        add('name', s.name);
-        add('chest', s.chestNo);
-        add('team', t ? t.name : 'N/A');
-        add('qr', '');
-
-        pArea.appendChild(card);
-    });
-
-    window.print();
-  },
-  
-  // Team Modules (re-used - not included here for brevity)
-  renderTeamStudents: function(el) { /* Re-used */
-    const myStudents = this.data.students.filter(s => s.teamId === this.state.user.id);
-    
-    el.innerHTML = `
-      <div class="row">
-        <h2>🧑‍🎓 My Students - ${this.state.user.name}</h2>
-        <div style="flex:1"></div>
-        <input class="input" style="width:250px" placeholder="🔍 Search Chest, Name, Category..." oninput="App.teamSearch(this.value)">
-      </div>
-      
-      <div class="card">
-        <h3>Add New Student</h3>
-        <form class="grid cols-3" style="align-items:end" onsubmit="App.addStudent(event)">
-           <div><label>Name</label><input class="input" id="s-name" placeholder="Full Name" required></div>
-           <div><label>Chest No.</label><input class="input" id="s-chest" placeholder="e.g. 101, 250" required type="number"></div>
-           <div><label>Category</label><select class="input" id="s-cat">${this.data.categories.map(c=>`<option>${c}</option>`).join('')}</select></div>
-           <button class="btn primary sm">➕ Add</button>
-        </form>
-      </div>
-      
-      <div class="card">
-        <h3>Current Students (${myStudents.length})</h3>
-        <table id="student-table">
-          <thead><tr><th>Chest No.</th><th>Name</th><th>Category</th><th>Action</th></tr></thead>
-          <tbody>
-            ${myStudents.map(s => this.studentRow(s)).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  },
-  studentRow: function(s) { /* Re-used */
-    return `<tr>
-      <td><span class="tag gold">#${s.chestNo}</span></td>
-      <td><strong>${s.name}</strong></td>
-      <td><span class="tag blue">${s.category}</span></td>
-      <td><button class="btn sm danger" onclick="App.delStudent('${s.id}')">❌ Remove</button></td>
-    </tr>`;
-  },
-  addStudent: function(e) { /* Re-used */
-    e.preventDefault();
-    const name = document.getElementById("s-name").value;
-    const chest = document.getElementById("s-chest").value;
-    const cat = document.getElementById("s-cat").value;
-    
-    if(this.data.students.find(s=>s.chestNo === chest)) return alert(`Chest Number ${chest} already exists! Please use a unique number.`);
-    
-    this.data.students.push({
-        id: Date.now().toString(), teamId: this.state.user.id, name, chestNo: chest, category: cat
-    });
-    Store.save(this.data); this.renderTabContent();
-  },
-  delStudent: function(id) { /* Re-used */
-    if(confirm("Remove student? All associated entries will also be removed.")) {
-        this.data.students = this.data.students.filter(s=>s.id!==id);
-        this.data.entries = this.data.entries.filter(e => !e.memberStudentIds.includes(id));
-        Store.save(this.data); this.renderTabContent();
-    }
-  },
-  teamSearch: function(q) { /* Re-used */
-    q = q.toLowerCase();
-    const myStudents = this.data.students.filter(s => s.teamId === this.state.user.id);
-    const tbody = document.querySelector("#student-table tbody");
-    tbody.innerHTML = myStudents.filter(s => 
-        s.name.toLowerCase().includes(q) || s.chestNo.includes(q) || s.category.toLowerCase().includes(q)
-    ).map(s => this.studentRow(s)).join('');
-  },
-  renderTeamEnroll: function(el) { /* Re-used */
-    const myStudents = this.data.students.filter(s => s.teamId === this.state.user.id);
-    
-    el.innerHTML = `<h2>📝 Enrollment</h2><p>Enroll your eligible students in competitions.</p><div class="grid cols-3">
-      ${this.data.competitions.map(c => {
-        const enrolled = this.data.entries.filter(e => e.competitionId === c.id && e.teamId === this.state.user.id);
-        
-        const eligible = myStudents.filter(s => c.category === 'GENERAL' || s.category === c.category);
-
-        return `<div class="card">
-           <div class="row">
-             <strong style="font-size:16px">${c.name}</strong> 
-             <span class="tag blue">${c.category}</span>
-             ${c.isStage ? '<span class="tag gold">Stage</span>' : ''}
-           </div>
-           <hr style="border:0; border-top:1px solid var(--border); margin:10px 0">
-           
-           <div style="margin-bottom:10px; min-height: 40px;">
-             ${enrolled.map(e => {
-                 const s = this.data.students.find(x => x.id === e.memberStudentIds[0]);
-                 return `<span class="tag green" style="margin-right:5px; margin-bottom:5px; display:inline-block">
-                    ${s.name} (#${s.chestNo}) <span style="cursor:pointer; margin-left:5px" onclick="App.unenroll('${e.id}')">&times;</span>
-                 </span>`;
-             }).join('')}
-             ${enrolled.length === 0 ? '<p style="font-style:italic; color:#ccc; font-size:13px;">No students enrolled yet.</p>' : ''}
-           </div>
-
-           <form class="row" onsubmit="App.enroll(event, '${c.id}')">
-             <select class="input sm" id="enr-${c.id}" ${eligible.length === 0 ? 'disabled' : ''}>
-                ${eligible.length === 0 ? '<option>No eligible students</option>' : eligible.map(s => `<option value="${s.id}">${s.name} (${s.chestNo})</option>`).join('')}
-             </select>
-             <button class="btn sm primary" ${eligible.length === 0 ? 'disabled' : ''}>Enroll</button>
-           </form>
-        </div>`;
-      }).join('')}
-    </div>`;
-  },
-  enroll: function(e, cid) { /* Re-used */
-    e.preventDefault();
-    const sid = document.getElementById(`enr-${cid}`).value;
-    if(!sid || sid === 'No eligible students') return alert("No student available or selected");
-    
-    const exists = this.data.entries.find(e => e.competitionId === cid && e.memberStudentIds.includes(sid));
-    if(exists) return alert("Student already enrolled in this competition.");
-    
-    this.data.entries.push({
-        id: Date.now().toString(), competitionId: cid, teamId: this.state.user.id, memberStudentIds: [sid]
-    });
-    Store.save(this.data); this.renderTabContent();
-  },
-  unenroll: function(eid) { /* Re-used */
-    this.data.entries = this.data.entries.filter(e => e.id !== eid);
-    Store.save(this.data); this.renderTabContent();
-  },
-  renderTeamSettings: function(el) { /* Re-used */
-    el.innerHTML = `
-      <h2>⚙️ Team Data Settings</h2>
-      <div class="card">
-        <h3>Team Password</h3>
-        <p>Your current team password is: <span class="tag gray">${this.data.teams.find(t=>t.id===this.state.user.id)?.password || 'N/A'}</span></p>
-        <form class="row" onsubmit="App.updateTeamPassword(event)">
-           <input class="input" id="new-team-pass" type="text" placeholder="Enter New Password" required style="width:200px">
-           <button class="btn primary">Update Password</button>
-        </form>
-      </div>
-    `;
-  },
-  updateTeamPassword: function(e) { /* Re-used */
-    e.preventDefault();
-    const newPass = document.getElementById("new-team-pass").value;
-    const team = this.data.teams.find(t=>t.id === this.state.user.id);
-    if(team) {
-        team.password = newPass;
-        Store.save(this.data);
-        alert(`Password for ${team.name} updated successfully!`);
-        this.renderTabContent();
-    }
-  }
-};
-
-// Start App
-App.init();
-</script>
-</body>
-</html>
+        const els = cfg.
