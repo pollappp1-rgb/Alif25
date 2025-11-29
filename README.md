@@ -11,11 +11,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
-  /* --- Median UI Theme Variables (White Background) --- */
+  /* --- Median UI Theme Variables (Light Mode Default) --- */
   :root {
     --bg: #ffffff; /* Pure White Background */
-    --surface: #f8f9fa; /* Very Light Grey for content areas */
-    --surface-alt: #f1f5f9;
+    --surface: #f8f9fa; /* Very Light Grey for body background */
+    --surface-alt: #f1f5f9; /* Lighter surface for selected states/tables */
     --border: #e9ecef; /* Lighter border */
     --text-main: #212529; /* Darker text */
     --text-muted: #6c757d;
@@ -23,24 +23,43 @@
     --primary-dark: #0056b3;
     --accent-gold: #ffc107; /* Yellow/Gold */
     --danger: #dc3545;
+    --danger-light: #f8d7da;
     --success: #28a745;
-    --radius: 12px; /* Standard radius */
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Soft, consistent shadow */
+    --radius: 12px;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     --font-heading: 'Playfair Display', serif;
     --font-body: 'Inter', sans-serif;
   }
+  
+  /* --- Dark Mode Variables --- */
+  body.dark-mode {
+    --bg: #1c1c1e; /* Dark background */
+    --surface: #2c2c2e; /* Slightly lighter surface for body */
+    --surface-alt: #3a3a3c; /* Lighter surface for cards/hover */
+    --border: #48484a; /* Dark border */
+    --text-main: #f2f2f7; /* Light text */
+    --text-muted: #a9a9b0; /* Light muted text */
+    --primary: #5e93ff; /* Lighter blue primary */
+    --primary-dark: #91b3ff;
+    --accent-gold: #ffc83a;
+    --danger: #ff453a;
+    --danger-light: #442a2a;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
 
+  /* --- Base Styles --- */
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
   
   body {
     margin: 0; padding: 0;
-    background-color: var(--surface); /* Use light grey for body */
+    background-color: var(--surface);
     color: var(--text-main);
     font-family: var(--font-body);
     font-size: 15px; 
     height: 100vh;
     display: flex;
     flex-direction: column;
+    transition: background-color 0.3s, color 0.3s;
   }
 
   /* --- Layout & Typography --- */
@@ -68,24 +87,26 @@
     background: var(--bg); position: sticky; top: 0; z-index: 50;
     box-shadow: 0 2px 4px rgba(0,0,0,0.04);
   }
+  .dark-mode header { box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
   .brand { display: flex; align-items: center; gap: 10px; }
   
   /* Custom Logo Styling */
   .logo-circle {
     width: 40px; height: 40px; background: var(--primary); color: #fff;
-    border-radius: 50%; /* Make it circular */
+    border-radius: 50%;
     display: grid; place-items: center;
     font-family: var(--font-heading); font-size: 18px; letter-spacing: 1px;
-    object-fit: cover; /* For uploaded images */
+    object-fit: cover;
     border: 2px solid var(--primary-dark);
   }
 
   /* --- UI Components --- */
   .card {
-    background: var(--bg); /* Pure white background for cards */
+    background: var(--bg);
     border-radius: var(--radius); padding: 25px; margin-bottom: 20px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
+    transition: background-color 0.3s, border-color 0.3s;
   }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .grid { display: grid; gap: 20px; }
@@ -96,28 +117,37 @@
     padding: 10px 18px; border-radius: 8px; border: 1px solid var(--border);
     background: var(--bg); cursor: pointer; font-weight: 500; font-family: var(--font-body);
     transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; font-size: 14px;
+    color: var(--text-main);
   }
-  .btn:hover { background: var(--surface-alt); border-color: #adb5bd; }
+  .btn:hover { background: var(--surface-alt); border-color: var(--text-muted); }
   .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
   .btn.primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3); }
-  .btn.danger { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-  .btn.danger:hover { background: #f1b0b7; }
+  .dark-mode .btn.primary:hover { box-shadow: 0 3px 6px rgba(94, 147, 255, 0.3); }
+
+  .btn.danger { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
+  .btn.danger:hover { background: var(--danger); color: #fff; }
   .btn.sm { padding: 8px 12px; font-size: 13px; border-radius: 6px; }
 
   .input, select {
     width: 100%; padding: 10px; border: 1px solid var(--border);
     border-radius: 8px; 
     font-family: var(--font-body); outline: none; transition: 0.2s;
-    background: var(--bg);
+    background: var(--bg); color: var(--text-main);
   }
-  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1); background: var(--bg); }
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1); }
+  .dark-mode .input:focus { box-shadow: 0 0 0 3px rgba(94, 147, 255, 0.2); }
   label { font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 5px; display: block; }
   
   .tag { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  /* Ensure tags contrast well in both modes */
   .tag.blue { background: #e0f7fa; color: #00bcd4; }
+  .dark-mode .tag.blue { background: #00373f; color: #4dd0e1; }
   .tag.green { background: #e6ffed; color: #43a047; }
+  .dark-mode .tag.green { background: #2a3a2d; color: #81c784; }
   .tag.gold { background: #fff8e1; color: #ffb300; }
+  .dark-mode .tag.gold { background: #443c29; color: #ffeb3b; }
   .tag.gray { background: #f1f3f5; color: #495057; }
+  .dark-mode .tag.gray { background: #5a5a5c; color: #e9ecef; }
 
   /* --- Navigation --- */
   .nav-btn {
@@ -131,6 +161,7 @@
     box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
   }
   .nav-btn.active:hover { background: var(--primary-dark); }
+  .dark-mode .nav-btn.active { box-shadow: 0 3px 6px rgba(94, 147, 255, 0.3); }
 
   /* --- Tables --- */
   table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
@@ -146,70 +177,20 @@
   }
   .login-box { width: 400px; max-width: 90%; }
   
-  /* --- Result Poster Styling --- */
-  .poster-template { 
-      width: 100%; max-width: 700px; margin: 20px auto; 
-      padding: 40px; border: 1px solid var(--border); 
-      border-radius: var(--radius); background: var(--bg); 
-      box-shadow: var(--shadow);
-      text-align: center;
+  /* --- Result Poster Styling (Ensuring Light Background for Posters/Print) --- */
+  .poster-template, .comp-poster-box { 
+      background: #ffffff !important; 
+      border-color: #e9ecef !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   }
   .champion-box { 
-      padding: 25px; margin: 25px 0; border-radius: var(--radius); 
-      background: #fffbef; border: 2px solid var(--accent-gold);
-      box-shadow: 0 4px 10px rgba(255, 193, 7, 0.2);
-  }
-  .champion-box h3 { font-size: 42px; color: var(--accent-gold); }
-  .secondary-results { display: flex; justify-content: space-around; gap: 15px; margin-top: 20px; }
-  .secondary-results > div { 
-      flex: 1; padding: 15px; border-radius: 8px; 
-      background: var(--surface-alt); border: 1px solid var(--border);
+      background: #fffbef !important; border-color: #ffc107 !important;
+      box-shadow: 0 4px 10px rgba(255, 193, 7, 0.2) !important;
   }
   .danger-note { background: #fff3cd; color: #856404; padding: 12px; border-radius: var(--radius); border: 1px dashed #ffeeba; font-size: 13px; }
-
-  /* --- Competition Poster Theme --- */
-  .comp-poster-box {
-    background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
-    padding: 60px; text-align: center; border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    max-width: 800px; margin: 30px auto;
-  }
-  .comp-poster-box h1 {
-    font-size: 48px; color: var(--primary-dark); line-height: 1.1; margin-bottom: 5px;
-  }
-  .comp-poster-box h2 {
-    font-size: 24px; color: var(--text-muted); margin-bottom: 30px;
-  }
-  .winner-podium {
-    display: flex; justify-content: center; align-items: flex-end; gap: 20px;
-    margin-top: 40px;
-  }
-  .podium-place {
-    width: 30%; max-width: 200px; padding: 20px 10px; border-radius: 10px 10px 0 0;
-    text-align: center; color: var(--text-main); font-family: var(--font-body);
-    position: relative;
-    transition: all 0.3s;
-  }
-  .podium-place h3 { font-size: 24px; margin-bottom: 5px; font-family: var(--font-heading); }
-  .podium-place p { margin: 0; font-size: 14px; line-height: 1.3; }
+  .dark-mode .danger-note { background: #3d3403; color: #ffeb3b; border-color: #554406; }
   
-  .place-1 { 
-    height: 200px; background: #fff8e1; border-bottom: 5px solid var(--accent-gold);
-    box-shadow: 0 -4px 15px rgba(255, 193, 7, 0.3);
-  }
-  .place-1 .rank-badge { 
-    background: var(--accent-gold); color: white; width: 40px; height: 40px; line-height: 40px;
-    border-radius: 50%; font-weight: bold; position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
-    font-size: 20px; border: 3px solid #ffd700;
-  }
-  .place-2 { height: 160px; background: #e9ecef; border-bottom: 5px solid #adb5bd; }
-  .place-3 { height: 130px; background: #f1f3f5; border-bottom: 5px solid #ced4da; }
-  .place-2 .rank-badge, .place-3 .rank-badge {
-    background: var(--primary); color: white; width: 30px; height: 30px; line-height: 30px;
-    border-radius: 50%; font-size: 14px; font-weight: bold; position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-  }
-
-  /* --- Print Styles for Reports --- */
+  /* --- Print Styles --- */
   @media print {
       body { background-color: #fff !important; }
       header, .sidebar, .btn, .input, .danger-note, .row > button:not(.print-btn), form { display: none !important; }
@@ -219,17 +200,38 @@
       table { border-spacing: 0; border-collapse: collapse; }
       th, td { border: 1px solid #ddd !important; padding: 8px !important; }
       .section-break { page-break-before: always; }
-      .comp-poster-box { box-shadow: none !important; border: 1px solid #000; page-break-after: always; }
+      
+      /* Force light background for print elements */
+      .comp-poster-box, .poster-template { 
+        background: #fff !important; 
+        color: #000 !important;
+        border: 1px solid #000 !important; 
+        box-shadow: none !important; 
+        page-break-after: always;
+      }
+      .comp-poster-box h1, .comp-poster-box h2 { color: #000 !important; }
   }
-
-  /* Logo Upload Utility */
-  .logo-upload-box {
-      border: 1px dashed var(--border); padding: 15px; border-radius: var(--radius);
-      text-align: center; cursor: pointer;
+  
+  /* Dark Mode Toggle Style */
+  #dark-mode-toggle {
+    background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-main);
+  }
+  
+  /* Danger Zone Styling */
+  .danger-zone {
+    border: 2px solid var(--danger);
+    background: var(--danger-light);
+    padding: 20px;
+    border-radius: var(--radius);
+    margin-top: 30px;
+  }
+  .dark-mode .danger-zone {
+    background: #3f1e1e;
+    border-color: #ff453a;
   }
 </style>
 </head>
-<body>
+<body class="${localStorage.getItem('darkMode') === 'enabled' ? 'dark-mode' : ''}">
 
 <header id="main-header" style="display:none">
   <div class="brand">
@@ -242,6 +244,7 @@
   <div class="row">
     <input class="input sm" style="width:200px" id="global-search" placeholder="🔍 Search All Data..." oninput="App.globalSearch(this.value)">
     <div id="header-user-info" style="font-size:13px; font-weight:600; color:var(--primary-dark)"></div>
+    <button id="dark-mode-toggle" onclick="App.toggleDarkMode()">🌙</button>
     <button class="btn sm" onclick="App.logout()">🚪 Logout</button>
   </div>
 </header>
@@ -257,11 +260,11 @@
    Store & Data Management
    -------------------------------------------------------------------------- */
 const Store = {
-  key: "alif_fest_data_v5_alif_final", // Updated version key
+  key: "alif_fest_data_v5_alif_final",
   
   defaults: () => ({
     meta: { version: 5 },
-    admin: { username: 'admin', password: 'alif' }, // Default admin password changed
+    admin: { username: 'admin', password: 'alif' },
     teams: [
         { id: 't1', name: 'ZARQAN', password: '123' },
         { id: 't2', name: 'ASQALAN', password: '123' },
@@ -274,7 +277,7 @@ const Store = {
     results: [],
     logo: null,
     
-    // Chest Card Config (Updated text)
+    // Chest Card Config 
     chestConfig: {
         widthCm: 9, heightCm: 13, bgColor: "#ffffff",
         elements: {
@@ -334,15 +337,35 @@ const App = {
     role: null, 
     activeTab: 'setup',
     posterTemplate: 'A',
-    compPosterId: null // New state for Competition Poster selection
+    compPosterId: null
   },
   
   init() {
     if(!localStorage.getItem(Store.key)) Store.save(this.data);
+    this.checkDarkMode();
     this.renderLogin();
     this.updateLogo();
   },
   
+  /* --- Dark Mode Toggle --- */
+  checkDarkMode() {
+      const isDark = localStorage.getItem('darkMode') === 'enabled';
+      document.body.classList.toggle('dark-mode', isDark);
+      const toggleBtn = document.getElementById('dark-mode-toggle');
+      if (toggleBtn) toggleBtn.innerHTML = isDark ? '💡' : '🌙';
+  },
+
+  toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      if (isDark) {
+          localStorage.setItem('darkMode', 'enabled');
+          document.getElementById('dark-mode-toggle').innerHTML = '💡';
+      } else {
+          localStorage.setItem('darkMode', 'disabled');
+          document.getElementById('dark-mode-toggle').innerHTML = '🌙';
+      }
+  },
+
   updateLogo() {
       const logoEl = document.getElementById("header-logo");
       if (logoEl && this.data.logo) {
@@ -351,7 +374,7 @@ const App = {
           logoEl.style.backgroundColor = 'transparent';
       } else if (logoEl) {
           logoEl.src = '';
-          logoEl.innerText = 'A'; // Changed to 'A'
+          logoEl.innerText = 'A';
           logoEl.style.backgroundColor = 'var(--primary)';
       }
   },
@@ -409,7 +432,7 @@ const App = {
         logoEl.style.backgroundColor = 'transparent';
     } else if (logoEl) {
         logoEl.src = '';
-        logoEl.innerText = 'A'; // Changed to 'A'
+        logoEl.innerText = 'A';
         logoEl.style.backgroundColor = 'var(--primary)';
     }
   },
@@ -449,17 +472,21 @@ const App = {
     document.getElementById("main-header").style.display = "flex";
     document.getElementById("header-user-info").innerText = this.state.role === 'admin' ? `Crew (${this.data.admin.username})` : `Team ${this.state.user.name}`;
     this.updateLogo();
+    this.checkDarkMode(); // Ensure toggle state is right
     
-    // New tab definitions
+    // Set the correct icon for the dark mode toggle
+    const toggleBtn = document.getElementById('dark-mode-toggle');
+    if (toggleBtn) toggleBtn.innerHTML = document.body.classList.contains('dark-mode') ? '💡' : '🌙';
+
     const adminTabs = [
         {id:'setup', lbl:'🛠️ Setup & Data'},
-        {id:'students_report', lbl:'🧑‍🤝‍🧑 Students by Team/Category'}, // New Report Tab 1
-        {id:'entries_report', lbl:'📝 Entries by Competition'}, // New Report Tab 2
+        {id:'students_report', lbl:'🧑‍🤝‍🧑 Students by Team/Category'},
+        {id:'entries_report', lbl:'📝 Entries by Competition'},
         {id:'comps', lbl:'📋 Competitions'},
         {id:'judge', lbl:'⚖️ Judge Panel'},
         {id:'scores', lbl:'🏆 Scoreboard'},
         {id:'overall_posters', lbl:'🖼️ Overall Poster'}, 
-        {id:'comp_posters', lbl:'🥇 Comp. Posters'}, // New Competition Poster Tab
+        {id:'comp_posters', lbl:'🥇 Comp. Posters'},
         {id:'chest', lbl:'🏷️ Chest Cards'}
     ];
     
@@ -511,7 +538,7 @@ const App = {
     }
   },
   
-  /* --- Global Search (Admin Only) --- */
+  /* --- Global Search --- */
   globalSearch(q) {
       if(this.state.role !== 'admin') return;
       q = q.toLowerCase().trim();
@@ -523,7 +550,6 @@ const App = {
       }
 
       const teamMap = new Map(this.data.teams.map(t => [t.id, t.name]));
-      const compMap = new Map(this.data.competitions.map(c => [c.id, c.name]));
       
       let results = [];
       
@@ -586,9 +612,7 @@ const App = {
       `;
   },
 
-  /* --------------------------------------------------------------------------
-     ADMIN MODULES - REPORTS (Unchanged)
-     -------------------------------------------------------------------------- */
+  /* --- Admin Reports (Print Button Updated) --- */
      
   renderAdminStudentsReport(el) {
     const teamMap = new Map(this.data.teams.map(t => [t.id, t]));
@@ -596,7 +620,7 @@ const App = {
     el.innerHTML = `
       <div class="row">
         <h2>🧑‍🤝‍🧑 Students by Team/Category Report</h2>
-        <button class="btn primary print-btn" onclick="App.printReport('students-report-content')">🖨️ Print Report</button>
+        <button class="btn primary print-btn" onclick="App.printReport('students-report-content')">🖨️ Print/Save as PDF</button>
       </div>
       
       <div class="card" id="students-report-content">
@@ -630,7 +654,7 @@ const App = {
     el.innerHTML = `
       <div class="row">
         <h2>📝 Entries by Competition Report</h2>
-        <button class="btn primary print-btn" onclick="App.printReport('entries-report-content')">🖨️ Print Report</button>
+        <button class="btn primary print-btn" onclick="App.printReport('entries-report-content')">🖨️ Print/Save as PDF</button>
       </div>
       
       <div class="card" id="entries-report-content">
@@ -686,9 +710,7 @@ const App = {
     window.print();
   },
 
-  /* --------------------------------------------------------------------------
-     ADMIN MODULES - COMPETITION POSTER (Unchanged)
-     -------------------------------------------------------------------------- */
+  /* --- Admin Comp Poster (Print Button Updated) --- */
   
   setCompPosterSelection(cid) {
       this.state.compPosterId = cid;
@@ -698,7 +720,6 @@ const App = {
   getCompPosterData(cid) {
       const results = this.data.results.filter(r => r.competitionId === cid);
       
-      // Map entries to students and teams
       const decoratedResults = results.map(r => {
           const entry = this.data.entries.find(e => e.id === r.entryId);
           if (!entry || !entry.memberStudentIds[0]) return null;
@@ -708,7 +729,6 @@ const App = {
           
           if (!student || !team) return null;
           
-          // Use only the first character of the rank label for sorting/identifying
           const rankChar = r.rankLabel ? r.rankLabel.toUpperCase().charAt(0) : '';
 
           return {
@@ -717,7 +737,7 @@ const App = {
               studentName: student.name,
               teamName: team.name
           };
-      }).filter(r => r !== null && r.rankChar); // Filter out nulls and empty ranks
+      }).filter(r => r !== null && r.rankChar);
 
       // Sort by rank: '1' > '2' > '3', then by points, then by rankLabel string
       decoratedResults.sort((a, b) => {
@@ -731,10 +751,7 @@ const App = {
           if (rankA === '3' && rankB !== '1' && rankB !== '2') return -1;
           if (rankB === '3' && rankA !== '1' && rankA !== '2') return 1;
           
-          // Secondary sort by points
           if (b.pointsAwarded !== a.pointsAwarded) return b.pointsAwarded - a.pointsAwarded;
-
-          // Fallback sort by rank label string
           return (a.rankLabel || '').localeCompare(b.rankLabel || '');
       });
       
@@ -844,17 +861,15 @@ const App = {
       const pArea = document.getElementById("print-area");
       
       pArea.innerHTML = `<div style="padding:40px; text-align:center; font-family:var(--font-heading); background:#fff;">
-          <h1 style="font-size:30px; color:var(--primary-dark)">Official Competition Result</h1>
-          <p style="color:var(--text-muted)">Generated on ${new Date().toLocaleDateString()}</p>
-          <hr style="border:0; border-top:2px solid var(--border); margin:20px 0;">
+          <h1 style="font-size:30px; color:#0056b3">Official Competition Result</h1>
+          <p style="color:#6c757d">Generated on ${new Date().toLocaleDateString()}</p>
+          <hr style="border:0; border-top:1px solid #e9ecef; margin:20px 0;">
       </div>` + content;
       
       window.print();
   },
 
-  /* --------------------------------------------------------------------------
-     ADMIN MODULES - OVERALL POSTER (Unchanged)
-     -------------------------------------------------------------------------- */
+  /* --- Admin Overall Poster (Print Button Updated) --- */
   
   renderAdminOverallPosters(el) { 
     const scoreData = this.calculateScoreData();
@@ -886,40 +901,48 @@ const App = {
   
   getOverallPosterHTML(data, template) { 
       const festTitle = this.data.chestConfig.elements.fest.text;
+      
+      // Force white background and dark text for poster content, regardless of dark mode.
+      const lightBgStyle = `background: #ffffff !important; color: #212529 !important;`;
+      const primaryDark = `#0056b3`;
+      const accentGold = `#ffc107`;
+      const textMuted = `#6c757d`;
+      const border = `#e9ecef`;
+      const surfaceAlt = `#f1f5f9`;
 
       if (template === 'A') {
           return `
-              <div class="poster-template" style="padding:60px; background:#fff;">
-                  <span style="color:var(--text-muted); font-size:16px; text-transform:uppercase;">${new Date().getFullYear()} Edition</span>
-                  <h1>${festTitle} Results</h1>
-                  <h2 style="font-size:28px; color:var(--accent-gold); margin-bottom:15px;">Overall Championship Winner</h2>
+              <div class="poster-template" style="${lightBgStyle} padding:60px; border-color:${border}">
+                  <span style="color:${textMuted}; font-size:16px; text-transform:uppercase;">${new Date().getFullYear()} Edition</span>
+                  <h1 style="color:#212529">${festTitle} Results</h1>
+                  <h2 style="font-size:28px; color:${accentGold}; margin-bottom:15px;">Overall Championship Winner</h2>
                   
                   <div class="champion-box">
-                      <p style="font-size:20px; color:var(--text-main); margin-bottom:8px;">The prestigious Champion Trophy goes to:</p>
-                      <h3>${data.champion.name}</h3>
-                      <p style="font-size:16px; color:var(--text-muted); margin-top:8px;">Total Points: ${data.champion.total}</p>
+                      <p style="font-size:20px; color:#212529; margin-bottom:8px;">The prestigious Champion Trophy goes to:</p>
+                      <h3 style="color:${accentGold}; font-size:42px;">${data.champion.name}</h3>
+                      <p style="color:${textMuted}; font-size:16px; margin-top:8px;">Total Points: ${data.champion.total}</p>
                   </div>
                   
-                  <p style="margin-top:30px; font-weight:600; font-size:14px; color:var(--primary-dark)">Congratulations to all participants!</p>
+                  <p style="margin-top:30px; font-weight:600; font-size:14px; color:${primaryDark}">Congratulations to all participants!</p>
               </div>
           `;
       } else if (template === 'B') {
           return `
-              <div class="poster-template" style="padding:40px; background:#fff;">
-                  <span style="color:var(--primary); font-size:14px; font-weight:600; text-transform:uppercase;">Official Scorecard | ${new Date().toLocaleDateString()}</span>
-                  <h1>${festTitle} Standings</h1>
-                  <h2 style="font-size:20px; color:var(--text-main)">Champion: <span style="color:var(--accent-gold); font-weight:bold;">${data.champion.name}</span> (${data.champion.total} Pts)</h2>
+              <div class="poster-template" style="${lightBgStyle} padding:40px; border-color:${border}">
+                  <span style="color:${primaryDark}; font-size:14px; font-weight:600; text-transform:uppercase;">Official Scorecard | ${new Date().toLocaleDateString()}</span>
+                  <h1 style="color:#212529">${festTitle} Standings</h1>
+                  <h2 style="font-size:20px; color:#212529">Champion: <span style="color:${accentGold}; font-weight:bold;">${data.champion.name}</span> (${data.champion.total} Pts)</h2>
 
                   <div class="secondary-results">
                       <div style="background:#e9f7ef; border:1px solid #c8e6c9;">
-                          <p style="color:var(--success); font-weight:700">🏆 2nd Place</p>
-                          <h4>${data.runnerUp.name}</h4>
-                          <p style="color:var(--success)">${data.runnerUp.total} Points</p>
+                          <p style="color:#28a745; font-weight:700">🏆 2nd Place</p>
+                          <h4 style="color:#212529">${data.runnerUp.name}</h4>
+                          <p style="color:#28a745">${data.runnerUp.total} Points</p>
                       </div>
                       <div style="background:#f0f5ff; border:1px solid #c9dfff;">
-                          <p style="color:var(--primary-dark); font-weight:700">🥉 3rd Place</p>
-                          <h4>${data.secondRunnerUp.name}</h4>
-                          <p style="color:var(--primary-dark)">${data.secondRunnerUp.total} Points</p>
+                          <p style="color:${primaryDark}; font-weight:700">🥉 3rd Place</p>
+                          <h4 style="color:#212529">${data.secondRunnerUp.name}</h4>
+                          <p style="color:${primaryDark}">${data.secondRunnerUp.total} Points</p>
                       </div>
                   </div>
                   
@@ -927,12 +950,12 @@ const App = {
                       <div style="background:#fefefe; border:1px solid #eee;">
                           <p style="color:#007bff; font-weight:700">🎤 Top Stage Performer</p>
                           <h4 style="color:#007bff; font-size:18px">${data.topStage.name}</h4>
-                          <p style="font-size:13px">${data.topStage.points} Pts | ${data.topStage.team}</p>
+                          <p style="font-size:13px; color:${textMuted}">${data.topStage.points} Pts | ${data.topStage.team}</p>
                       </div>
                       <div style="background:#fefefe; border:1px solid #eee;">
                           <p style="color:#343a40; font-weight:700">✍️ Top Non-Stage Performer</p>
                           <h4 style="color:#343a40; font-size:18px">${data.topNonStage.name}</h4>
-                          <p style="font-size:13px">${data.topNonStage.points} Pts | ${data.topNonStage.team}</p>
+                          <p style="font-size:13px; color:${textMuted}">${data.topNonStage.points} Pts | ${data.topNonStage.team}</p>
                       </div>
                   </div>
               </div>
@@ -944,77 +967,15 @@ const App = {
   printOverallPoster() { 
     const content = document.getElementById("overall-poster-area").innerHTML;
     const pArea = document.getElementById("print-area");
-    // Add header for print context
     pArea.innerHTML = `<div style="padding:40px; text-align:center; font-family:var(--font-heading); background:#fff;">
-      <h1 style="font-size:30px; color:var(--primary-dark)">${this.data.chestConfig.elements.fest.text} Overall Results</h1>
-      <p style="color:var(--text-muted)">Official Printout - ${new Date().toLocaleDateString()}</p>
-      <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+      <h1 style="font-size:30px; color:#0056b3">${this.data.chestConfig.elements.fest.text} Overall Results</h1>
+      <p style="color:#6c757d">Official Printout - ${new Date().toLocaleDateString()}</p>
+      <hr style="border:0; border-top:1px solid #e9ecef; margin:20px 0;">
       </div>` + content;
     window.print();
   },
 
-  /* --------------------------------------------------------------------------
-     REST OF ADMIN MODULES (Unchanged functionality)
-     -------------------------------------------------------------------------- */
-  
-  // Reusing existing functions from previous steps...
-  calculateScoreData() {
-      const scores = {}; 
-      this.data.teams.forEach(t => {
-          scores[t.id] = { id: t.id, name: t.name, total: 0, stage: 0, nonStage: 0, cats: {} };
-      });
-
-      const studentPoints = {}; 
-      
-      this.data.results.forEach(r => {
-          const entry = this.data.entries.find(e => e.id === r.entryId);
-          if(!entry) return;
-          const comp = this.data.competitions.find(c => c.id === entry.competitionId);
-          if(!comp) return; // Ensure competition exists
-          const pts = r.pointsAwarded || 0;
-          const tid = entry.teamId;
-          const sid = entry.memberStudentIds[0];
-          
-          if(scores[tid]) {
-              scores[tid].total += pts;
-              if(comp.isStage) scores[tid].stage += pts; else scores[tid].nonStage += pts;
-          }
-          
-          if (sid) {
-              if (!studentPoints[sid]) studentPoints[sid] = { total: 0, stage: 0, nonStage: 0 };
-              studentPoints[sid].total += pts;
-              if(comp.isStage) studentPoints[sid].stage += pts; else studentPoints[sid].nonStage += pts;
-          }
-      });
-
-      const sortedTeams = Object.values(scores).sort((a,b) => b.total - a.total);
-      
-      let topStageStudent = { name: '-', points: 0, team: '-' };
-      let topNonStageStudent = { name: '-', points: 0, team: '-' };
-
-      Object.entries(studentPoints).forEach(([sid, p]) => {
-          const s = this.data.students.find(student => student.id === sid);
-          if (!s) return;
-          const t = this.data.teams.find(team => team.id === s.teamId);
-          const studentInfo = { name: s.name, points: 0, team: t ? t.name : 'N/A' };
-
-          if (p.stage > topStageStudent.points) {
-              topStageStudent = { ...studentInfo, points: p.stage };
-          }
-          if (p.nonStage > topNonStageStudent.points) {
-              topNonStageStudent = { ...studentInfo, points: p.nonStage };
-          }
-      });
-
-      return {
-          champion: sortedTeams[0] || { name: 'N/A', total: 0 },
-          runnerUp: sortedTeams[1] || { name: 'N/A', total: 0 },
-          secondRunnerUp: sortedTeams[2] || { name: 'N/A', total: 0 },
-          topStage: topStageStudent,
-          topNonStage: topNonStageStudent,
-          allTeams: sortedTeams
-      };
-  },
+  /* --- Admin Setup (Clear Data Added) --- */
   
   renderAdminSetup: function(el) { 
     el.innerHTML = `
@@ -1071,6 +1032,12 @@ const App = {
         </div>
       </div>
       
+      <div class="card danger-zone">
+        <h3 style="color:var(--danger)">⚠️ Danger Zone: Clear Application Data</h3>
+        <p style="font-size:14px; color:var(--danger)">**WARNING:** This action will delete ALL students, teams, competitions, entries, and results. **Only your Admin login details will be preserved.**</p>
+        <button class="btn danger" style="width:100%; margin-top:15px;" onclick="App.clearAllData()">WIPE ALL DATA</button>
+      </div>
+
       <div id="team-edit-modal" class="card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:100; min-width:350px;">
           <h3>Edit Team <span id="edit-team-name-display"></span></h3>
           <form onsubmit="App.saveTeamEdit(event)">
@@ -1087,6 +1054,173 @@ const App = {
       </div>
     `;
   },
+  
+  clearAllData: function() {
+      if(!confirm("ARE YOU ABSOLUTELY SURE? You are about to delete ALL festival data (Teams, Students, Comps, Entries, Results). This cannot be undone.")) {
+          return;
+      }
+      if(!prompt("To confirm deletion, please type the word 'DELETE' (case sensitive) below:")) {
+          alert("Data clearance cancelled.");
+          return;
+      }
+
+      // Preserve admin credentials and logo
+      const adminCreds = this.data.admin;
+      const logoData = this.data.logo;
+      const defaults = Store.defaults();
+      
+      // Reset to defaults
+      this.data = defaults;
+      this.data.admin = adminCreds;
+      this.data.logo = logoData;
+      
+      Store.save(this.data);
+      alert("All festival data has been cleared. Only admin login and logo remain.");
+      this.logout(); // Force re-login
+  },
+
+  /* --- Admin Scoreboard (Print Button Updated) --- */
+
+  calculateScoreData() {
+      const scores = {}; 
+      this.data.teams.forEach(t => {
+          scores[t.id] = { id: t.id, name: t.name, total: 0, stage: 0, nonStage: 0, cats: {} };
+      });
+
+      const studentPoints = {}; 
+      
+      this.data.results.forEach(r => {
+          const entry = this.data.entries.find(e => e.id === r.entryId);
+          if(!entry) return;
+          const comp = this.data.competitions.find(c => c.id === entry.competitionId);
+          if(!comp) return;
+          const pts = r.pointsAwarded || 0;
+          const tid = entry.teamId;
+          const sid = entry.memberStudentIds[0];
+          
+          if(scores[tid]) {
+              scores[tid].total += pts;
+              if(comp.isStage) scores[tid].stage += pts; else scores[tid].nonStage += pts;
+          }
+          
+          if (sid) {
+              if (!studentPoints[sid]) studentPoints[sid] = { total: 0, stage: 0, nonStage: 0 };
+              studentPoints[sid].total += pts;
+              if(comp.isStage) studentPoints[sid].stage += pts; else studentPoints[sid].nonStage += pts;
+          }
+      });
+
+      const sortedTeams = Object.values(scores).sort((a,b) => b.total - a.total);
+      
+      let topStageStudent = { name: '-', points: 0, team: '-' };
+      let topNonStageStudent = { name: '-', points: 0, team: '-' };
+
+      Object.entries(studentPoints).forEach(([sid, p]) => {
+          const s = this.data.students.find(student => student.id === sid);
+          if (!s) return;
+          const t = this.data.teams.find(team => team.id === s.teamId);
+          const studentInfo = { name: s.name, points: 0, team: t ? t.name : 'N/A' };
+
+          if (p.stage > topStageStudent.points) {
+              topStageStudent = { ...studentInfo, points: p.stage };
+          }
+          if (p.nonStage > topNonStageStudent.points) {
+              topNonStageStudent = { ...studentInfo, points: p.nonStage };
+          }
+      });
+
+      return {
+          champion: sortedTeams[0] || { name: 'N/A', total: 0 },
+          runnerUp: sortedTeams[1] || { name: 'N/A', total: 0 },
+          secondRunnerUp: sortedTeams[2] || { name: 'N/A', total: 0 },
+          topStage: topStageStudent,
+          topNonStage: topNonStageStudent,
+          allTeams: sortedTeams
+      };
+  },
+  
+  renderAdminScores: function(el) { 
+    const data = this.calculateScoreData();
+
+    const getRank = (arr, item, key) => {
+        const val = item[key];
+        const rankIndex = arr.findIndex(x => x.id === item.id) + 1;
+        const prevIndex = rankIndex - 2;
+        
+        const tie = prevIndex >= 0 && arr[prevIndex] && arr[prevIndex][key] === val ?
+            '<span class="tie-indicator" title="Tied Rank" style="color:var(--accent-gold)">=</span>' : '';
+        
+        return `${val} ${tie}`;
+    };
+
+    el.innerHTML = `
+      <div class="row"><h2>🏆 Live Scoreboard</h2> <button class="btn primary" onclick="App.printOverallScores()">🖨️ Print/Save as PDF</button></div>
+      
+      <div id="print-content">
+        <div class="grid cols-3">
+           <div class="card" style="text-align:center; background:#ffffe0; border-color:var(--accent-gold)">
+              <h3 style="color:#212529">Overall Champion</h3>
+              <h1 style="font-size:40px; color:var(--accent-gold); margin-top:5px; margin-bottom:5px;">${data.champion.name}</h1>
+              <p style="font-size:16px; color:var(--text-main); font-weight:600">${data.champion.total} Points</p>
+           </div>
+           
+           <div class="card" style="text-align:center; background:#e0f7fa;">
+              <h3 style="color:#212529">🎤 Top Stage Performer</h3>
+              <h3 style="color:var(--primary); margin-top:5px; margin-bottom:5px;">${data.topStage.name}</h3>
+              <p style="font-size:14px; color:var(--text-main)">${data.topStage.points} Pts (${data.topStage.team})</p>
+           </div>
+           
+           <div class="card" style="text-align:center; background:#f0f5ff;">
+              <h3 style="color:#212529">🖊️ Top Non-Stage Performer</h3>
+              <h3 style="color:var(--primary); margin-top:5px; margin-bottom:5px;">${data.topNonStage.name}</h3>
+              <p style="font-size:14px; color:var(--text-main)">${data.topNonStage.points} Pts (${data.topNonStage.team})</p>
+           </div>
+        </div>
+
+        <div class="card">
+          <h3>Detailed Standings</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Team</th>
+                <th>Overall Points</th>
+                <th>Stage</th>
+                <th>Non-Stage</th>
+                <th>Category Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.allTeams.map((t, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td><strong>${t.name}</strong></td>
+                  <td style="font-size:16px; color:var(--primary); font-weight:700">${getRank(data.allTeams, t, 'total')}</td>
+                  <td>${t.stage}</td>
+                  <td>${t.nonStage}</td>
+                  <td><span class="tag gray">${Object.values(t.cats).reduce((a, b) => a + b, 0)}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <p style="margin-top:20px; font-size:12px; color:var(--text-muted);">Points are calculated based on results entered in the Judge Panel.</p>
+        </div>
+      </div>
+    `;
+  },
+  
+  printOverallScores: function() { 
+    const content = document.getElementById("print-content").innerHTML;
+    const pArea = document.getElementById("print-area");
+    pArea.innerHTML = `<div style="padding:40px; text-align:center; font-family:var(--font-heading); background:#fff;">
+      <h1 style="font-size:30px; color:#0056b3">${this.data.chestConfig.elements.fest.text} Scoreboard</h1>
+      <p style="color:#6c757d">Official Printout - ${new Date().toLocaleDateString()}</p>
+      <hr style="border:0; border-top:1px solid #e9ecef; margin:20px 0;">
+      </div>` + content;
+    window.print();
+  },
+  
+  // Reusing other functions from previous step (handleLogoUpload, addTeamPrompt, etc.)
   handleLogoUpload: function(file) { 
       if (!file) return;
       const reader = new FileReader();
@@ -1103,7 +1237,7 @@ const App = {
       if (confirm("Are you sure you want to remove the custom logo?")) {
           this.data.logo = null;
           Store.save(this.data);
-          alert("Custom logo removed. Default 'A' will be used."); // Changed to 'A'
+          alert("Custom logo removed. Default 'A' will be used.");
           this.renderTabContent();
           this.updateLogo();
       }
@@ -1163,7 +1297,6 @@ const App = {
       alert("Crew credentials updated successfully!");
       this.loadLayout();
   },
-  
   renderAdminComps: function(el) { 
     el.innerHTML = `
       <div class="row"><h2>📋 Competitions</h2> <div style="flex:1"></div></div>
@@ -1310,90 +1443,11 @@ const App = {
     btn.style.borderColor = "var(--success)";
     setTimeout(()=>{ btn.innerHTML=originalText; btn.style.background=originalBg; btn.style.borderColor="var(--primary)" }, 1000);
   },
-  renderAdminScores: function(el) { 
-    const data = this.calculateScoreData();
-
-    const getRank = (arr, item, key) => {
-        const val = item[key];
-        const rankIndex = arr.findIndex(x => x.id === item.id) + 1;
-        const prevIndex = rankIndex - 2;
-        
-        const tie = prevIndex >= 0 && arr[prevIndex] && arr[prevIndex][key] === val ?
-            '<span class="tie-indicator" title="Tied Rank" style="color:var(--accent-gold)">=</span>' : '';
-        
-        return `${val} ${tie}`;
-    };
-
-    el.innerHTML = `
-      <div class="row"><h2>🏆 Live Scoreboard</h2> <button class="btn primary" onclick="App.printOverallScores()">⬇️ Download PDF</button></div>
-      
-      <div id="print-content">
-        <div class="grid cols-3">
-           <div class="card" style="text-align:center; background:#ffffe0; border-color:var(--accent-gold)">
-              <h3>Overall Champion</h3>
-              <h1 style="font-size:40px; color:var(--accent-gold); margin-top:5px; margin-bottom:5px;">${data.champion.name}</h1>
-              <p style="font-size:16px; color:var(--text-main); font-weight:600">${data.champion.total} Points</p>
-           </div>
-           
-           <div class="card" style="text-align:center; background:#e0f7fa;">
-              <h3>🎤 Top Stage Performer</h3>
-              <h3 style="color:var(--primary); margin-top:5px; margin-bottom:5px;">${data.topStage.name}</h3>
-              <p style="font-size:14px">${data.topStage.points} Pts (${data.topStage.team})</p>
-           </div>
-           
-           <div class="card" style="text-align:center; background:#f0f5ff;">
-              <h3>🖊️ Top Non-Stage Performer</h3>
-              <h3 style="color:var(--primary); margin-top:5px; margin-bottom:5px;">${data.topNonStage.name}</h3>
-              <p style="font-size:14px">${data.topNonStage.points} Pts (${data.topNonStage.team})</p>
-           </div>
-        </div>
-
-        <div class="card">
-          <h3>Detailed Standings</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Team</th>
-                <th>Overall Points</th>
-                <th>Stage</th>
-                <th>Non-Stage</th>
-                <th>Category Points</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.allTeams.map((t, index) => `
-                <tr>
-                  <td>${index + 1}</td>
-                  <td><strong>${t.name}</strong></td>
-                  <td style="font-size:16px; color:var(--primary); font-weight:700">${getRank(data.allTeams, t, 'total')}</td>
-                  <td>${t.stage}</td>
-                  <td>${t.nonStage}</td>
-                  <td><span class="tag gray">${Object.values(t.cats).reduce((a, b) => a + b, 0)}</span></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          <p style="margin-top:20px; font-size:12px; color:var(--text-muted);">Points are calculated based on results entered in the Judge Panel.</p>
-        </div>
-      </div>
-    `;
-  },
-  printOverallScores: function() { 
-    const content = document.getElementById("print-content").innerHTML;
-    const pArea = document.getElementById("print-area");
-    pArea.innerHTML = `<div style="padding:40px; text-align:center; font-family:var(--font-heading); background:#fff;">
-      <h1 style="font-size:30px; color:var(--primary-dark)">${this.data.chestConfig.elements.fest.text} Scoreboard</h1>
-      <p style="color:var(--text-muted)">Generated on ${new Date().toLocaleDateString()}</p>
-      <hr style="border:0; border-top:2px solid var(--border); margin:20px 0;">
-      </div>` + content;
-    window.print();
-  },
   renderAdminChest: function(el) { 
     const cfg = this.data.chestConfig;
     
     el.innerHTML = `
-      <div class="row"><h2>🏷️ Chest Card Designer</h2> <button class="btn primary" onclick="App.printChestCards()">🖨️ Print All Cards</button></div>
+      <div class="row"><h2>🏷️ Chest Card Designer</h2> <button class="btn primary" onclick="App.printChestCards()">🖨️ Print/Save Cards (PDF)</button></div>
       
       <div class="grid cols-2">
         <div class="card" style="max-height: 80vh; overflow-y:auto">
@@ -1515,4 +1569,194 @@ const App = {
         const card = document.createElement("div");
         card.className = "print-card";
         
-        const els = cfg.
+        const els = cfg.elements;
+        const add = (k, html) => {
+            if(!els[k].visible) return;
+            const d = document.createElement("div");
+            d.style.position = "absolute";
+            d.style.top = els[k].y + "%";
+            d.style.left = els[k].x + "%";
+            d.style.transform = "translate(-50%, -50%)";
+            d.style.textAlign = "center";
+            
+            if(k!=='qr') {
+                d.style.fontSize = (els[k].size * 0.7) + "pt"; 
+                d.style.fontWeight = els[k].bold ? "bold" : "normal";
+                d.style.color = els[k].color;
+                d.style.whiteSpace = "nowrap";
+                d.innerText = html;
+            } else {
+                 const qrSizePt = els[k].size * 0.7; 
+                 const qrDiv = document.createElement("div");
+                 qrDiv.style.padding = "2px"; // Padding to ensure QR code prints correctly
+                 new QRCode(qrDiv, { text: `ALIF-${s.chestNo}`, width: qrSizePt, height: qrSizePt, colorDark: els[k].color, colorLight: 'transparent' });
+                 d.appendChild(qrDiv);
+            }
+            card.appendChild(d);
+        };
+        
+        add('fest', els.fest.text);
+        add('name', s.name);
+        add('chest', s.chestNo);
+        add('team', t ? t.name : 'N/A');
+        add('qr', '');
+
+        pArea.appendChild(card);
+    });
+
+    window.print();
+  },
+  
+  // Team Modules (re-used)
+  renderTeamStudents: function(el) { 
+    const myStudents = this.data.students.filter(s => s.teamId === this.state.user.id);
+    
+    el.innerHTML = `
+      <div class="row">
+        <h2>🧑‍🎓 My Students - ${this.state.user.name}</h2>
+        <div style="flex:1"></div>
+        <input class="input" style="width:250px" placeholder="🔍 Search Chest, Name, Category..." oninput="App.teamSearch(this.value)">
+      </div>
+      
+      <div class="card">
+        <h3>Add New Student</h3>
+        <form class="grid cols-3" style="align-items:end" onsubmit="App.addStudent(event)">
+           <div><label>Name</label><input class="input" id="s-name" placeholder="Full Name" required></div>
+           <div><label>Chest No.</label><input class="input" id="s-chest" placeholder="e.g. 101, 250" required type="number"></div>
+           <div><label>Category</label><select class="input" id="s-cat">${this.data.categories.map(c=>`<option>${c}</option>`).join('')}</select></div>
+           <button class="btn primary sm">➕ Add</button>
+        </form>
+      </div>
+      
+      <div class="card">
+        <h3>Current Students (${myStudents.length})</h3>
+        <table id="student-table">
+          <thead><tr><th>Chest No.</th><th>Name</th><th>Category</th><th>Action</th></tr></thead>
+          <tbody>
+            ${myStudents.map(s => this.studentRow(s)).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  },
+  studentRow: function(s) { 
+    return `<tr>
+      <td><span class="tag gold">#${s.chestNo}</span></td>
+      <td><strong>${s.name}</strong></td>
+      <td><span class="tag blue">${s.category}</span></td>
+      <td><button class="btn sm danger" onclick="App.delStudent('${s.id}')">❌ Remove</button></td>
+    </tr>`;
+  },
+  addStudent: function(e) { 
+    e.preventDefault();
+    const name = document.getElementById("s-name").value;
+    const chest = document.getElementById("s-chest").value;
+    const cat = document.getElementById("s-cat").value;
+    
+    if(this.data.students.find(s=>s.chestNo === chest)) return alert(`Chest Number ${chest} already exists! Please use a unique number.`);
+    
+    this.data.students.push({
+        id: Date.now().toString(), teamId: this.state.user.id, name, chestNo: chest, category: cat
+    });
+    Store.save(this.data); this.renderTabContent();
+  },
+  delStudent: function(id) { 
+    if(confirm("Remove student? All associated entries will also be removed.")) {
+        this.data.students = this.data.students.filter(s=>s.id!==id);
+        this.data.entries = this.data.entries.filter(e => !e.memberStudentIds.includes(id));
+        Store.save(this.data); this.renderTabContent();
+    }
+  },
+  teamSearch: function(q) { 
+    q = q.toLowerCase();
+    const myStudents = this.data.students.filter(s => s.teamId === this.state.user.id);
+    const tbody = document.querySelector("#student-table tbody");
+    tbody.innerHTML = myStudents.filter(s => 
+        s.name.toLowerCase().includes(q) || s.chestNo.includes(q) || s.category.toLowerCase().includes(q)
+    ).map(s => this.studentRow(s)).join('');
+  },
+  renderTeamEnroll: function(el) { 
+    const myStudents = this.data.students.filter(s => s.teamId === this.state.user.id);
+    
+    el.innerHTML = `<h2>📝 Enrollment</h2><p>Enroll your eligible students in competitions.</p><div class="grid cols-3">
+      ${this.data.competitions.map(c => {
+        const enrolled = this.data.entries.filter(e => e.competitionId === c.id && e.teamId === this.state.user.id);
+        
+        const eligible = myStudents.filter(s => c.category === 'GENERAL' || s.category === c.category);
+
+        return `<div class="card">
+           <div class="row">
+             <strong style="font-size:16px">${c.name}</strong> 
+             <span class="tag blue">${c.category}</span>
+             ${c.isStage ? '<span class="tag gold">Stage</span>' : ''}
+           </div>
+           <hr style="border:0; border-top:1px solid var(--border); margin:10px 0">
+           
+           <div style="margin-bottom:10px; min-height: 40px;">
+             ${enrolled.map(e => {
+                 const s = this.data.students.find(x => x.id === e.memberStudentIds[0]);
+                 return `<span class="tag green" style="margin-right:5px; margin-bottom:5px; display:inline-block">
+                    ${s.name} (#${s.chestNo}) <span style="cursor:pointer; margin-left:5px" onclick="App.unenroll('${e.id}')">&times;</span>
+                 </span>`;
+             }).join('')}
+             ${enrolled.length === 0 ? '<p style="font-style:italic; color:#ccc; font-size:13px;">No students enrolled yet.</p>' : ''}
+           </div>
+
+           <form class="row" onsubmit="App.enroll(event, '${c.id}')">
+             <select class="input sm" id="enr-${c.id}" ${eligible.length === 0 ? 'disabled' : ''}>
+                ${eligible.length === 0 ? '<option>No eligible students</option>' : eligible.map(s => `<option value="${s.id}">${s.name} (${s.chestNo})</option>`).join('')}
+             </select>
+             <button class="btn sm primary" ${eligible.length === 0 ? 'disabled' : ''}>Enroll</button>
+           </form>
+        </div>`;
+      }).join('')}
+    </div>`;
+  },
+  enroll: function(e, cid) { 
+    e.preventDefault();
+    const sid = document.getElementById(`enr-${cid}`).value;
+    if(!sid || sid === 'No eligible students') return alert("No student available or selected");
+    
+    const exists = this.data.entries.find(e => e.competitionId === cid && e.memberStudentIds.includes(sid));
+    if(exists) return alert("Student already enrolled in this competition.");
+    
+    this.data.entries.push({
+        id: Date.now().toString(), competitionId: cid, teamId: this.state.user.id, memberStudentIds: [sid]
+    });
+    Store.save(this.data); this.renderTabContent();
+  },
+  unenroll: function(eid) { 
+    this.data.entries = this.data.entries.filter(e => e.id !== eid);
+    Store.save(this.data); this.renderTabContent();
+  },
+  renderTeamSettings: function(el) { 
+    el.innerHTML = `
+      <h2>⚙️ Team Data Settings</h2>
+      <div class="card">
+        <h3>Team Password</h3>
+        <p>Your current team password is: <span class="tag gray">${this.data.teams.find(t=>t.id===this.state.user.id)?.password || 'N/A'}</span></p>
+        <form class="row" onsubmit="App.updateTeamPassword(event)">
+           <input class="input" id="new-team-pass" type="text" placeholder="Enter New Password" required style="width:200px">
+           <button class="btn primary">Update Password</button>
+        </form>
+      </div>
+    `;
+  },
+  updateTeamPassword: function(e) { 
+    e.preventDefault();
+    const newPass = document.getElementById("new-team-pass").value;
+    const team = this.data.teams.find(t=>t.id === this.state.user.id);
+    if(team) {
+        team.password = newPass;
+        Store.save(this.data);
+        alert(`Password for ${team.name} updated successfully!`);
+        this.renderTabContent();
+    }
+  }
+};
+
+// Start App
+App.init();
+</script>
+</body>
+</html>
