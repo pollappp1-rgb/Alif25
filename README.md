@@ -87,14 +87,14 @@
 "use strict";
 
 const Store = {
-    key: "alif_fest_v12_final",
+    key: "alif_fest_v13_final",
     defaults: () => ({
-        meta: { version: 12 },
+        meta: { version: 13 },
         theme: 'light',
         admin: { username: 'admin', password: '123' },
         teams: [ { id: 't1', name: 'ZARQAN', password: '123' }, { id: 't2', name: 'ASQALAN', password: '123' }, { id: 't3', name: 'ASBAHAN', password: '123' } ],
         categories: ['SUB JUNIOR', 'JUNIOR', 'SENIOR', 'GENERAL'],
-        competitions: [], // {id, name, category, isStage, type:'INDIVIDUAL'|'GROUP', limit: 10}
+        competitions: [], // {id, name, category, isStage, type:'INDIVIDUAL'|'GROUP', limit: 10, teamLimit: 2}
         students: [], entries: [], results: [], 
         logo: null,
         chestConfig: { widthCm: 9, heightCm: 13, radius: 0, bgColor: "#ffffff", logo: null, elements: { qr: { x: 50, y: 35, size: 80, color: "#000000", visible: true }, name: { x: 50, y: 65, size: 16, color: "#000000", bold: true, visible: true }, chest: { x: 50, y: 78, size: 28, color: "#4f46e5", bold: true, visible: true }, team: { x: 50, y: 90, size: 12, color: "#64748b", bold: false, visible: true }, fest: { x: 50, y: 10, size: 18, color: "#1e293b", bold: true, text:"ALIF Fest", visible: true }, logo: { x: 50, y: 20, size: 40, visible: false } } }
@@ -191,15 +191,39 @@ const App = {
     ulData(i){const r=new FileReader();r.onload=e=>{this.data=JSON.parse(e.target.result);Store.save(this.data);location.reload()};r.readAsText(i.files[0])},
     wipe(){if(confirm("Wipe Data?")){this.data.students=[];this.data.entries=[];this.data.results=[];Store.save(this.data);location.reload()}},
 
+    /* COMPETITIONS - Added Team Limit */
     renderComps(el) {
         el.innerHTML = `
-            <div class="card"><h3>Create Competition</h3><form class="row" onsubmit="App.addComp(event)"><input class="input" id="cn" placeholder="Name" required style="flex:2"><select class="input" id="cc" style="flex:1">${this.data.categories.map(c=>`<option>${c}</option>`).join('')}</select><select class="input" id="ct" style="flex:1"><option value="INDIVIDUAL">Individual</option><option value="GROUP">Group</option></select><input class="input" type="number" id="cl" placeholder="Limit" style="width:80px" value="20" required><label><input type="checkbox" id="cs"> Stage</label><button class="btn primary">Add</button></form></div>
+            <div class="card"><h3>Create Competition</h3>
+            <form class="row" onsubmit="App.addComp(event)">
+                <input class="input" id="cn" placeholder="Name" required style="flex:2">
+                <select class="input" id="cc" style="flex:1">${this.data.categories.map(c=>`<option>${c}</option>`).join('')}</select>
+                <select class="input" id="ct" style="flex:1"><option value="INDIVIDUAL">Individual</option><option value="GROUP">Group</option></select>
+                <input class="input" type="number" id="cl" placeholder="Total Limit" style="width:90px" value="20" required title="Total participants allowed">
+                <input class="input" type="number" id="ctl" placeholder="Team Lmt" style="width:90px" value="2" required title="Limit per Team">
+                <label><input type="checkbox" id="cs"> Stage</label>
+                <button class="btn primary">Add</button>
+            </form></div>
             <div class="card"><table><thead><tr><th>Name</th><th>Cat</th><th>Type</th><th>Entries</th><th>Action</th></tr></thead><tbody>${this.data.competitions.map(c => {
                 const cnt = this.data.entries.filter(e=>e.competitionId===c.id).length; const pct = Math.min(100, (cnt/c.limit)*100);
-                return `<tr><td>${c.name}</td><td><span class="tag blue">${c.category}</span></td><td>${c.isStage?'Stage':'Off'} / ${c.type}</td><td><div style="font-size:11px">${cnt} / ${c.limit}</div><div class="progress-bar"><div class="progress-fill ${cnt>=c.limit?'full':''}" style="width:${pct}%"></div></div></td><td><button class="btn sm danger" onclick="App.delComp('${c.id}')">Del</button></td></tr>`;
+                return `<tr><td>${c.name}</td><td><span class="tag blue">${c.category}</span></td><td>${c.isStage?'Stage':'Off'} / ${c.type}</td>
+                <td><div style="font-size:11px">${cnt} / ${c.limit} (Max ${c.teamLimit}/Team)</div><div class="progress-bar"><div class="progress-fill ${cnt>=c.limit?'full':''}" style="width:${pct}%"></div></div></td>
+                <td><button class="btn sm danger" onclick="App.delComp('${c.id}')">Del</button></td></tr>`;
             }).join('')}</tbody></table></div>`;
     },
-    addComp(e){e.preventDefault();this.data.competitions.push({id:Date.now().toString(),name:document.getElementById('cn').value,category:document.getElementById('cc').value,type:document.getElementById('ct').value,limit:Number(document.getElementById('cl').value),isStage:document.getElementById('cs').checked});Store.save(this.data);this.renderTab()},
+    addComp(e){
+        e.preventDefault();
+        this.data.competitions.push({
+            id:Date.now().toString(),
+            name:document.getElementById('cn').value,
+            category:document.getElementById('cc').value,
+            type:document.getElementById('ct').value,
+            limit:Number(document.getElementById('cl').value),
+            teamLimit:Number(document.getElementById('ctl').value), // New
+            isStage:document.getElementById('cs').checked
+        });
+        Store.save(this.data); this.renderTab();
+    },
     delComp(id){if(confirm("Del?")){this.data.competitions=this.data.competitions.filter(c=>c.id!==id);this.data.entries=this.data.entries.filter(e=>e.competitionId!==id);Store.save(this.data);this.renderTab()}},
 
     renderJudge(el) { el.innerHTML=`<div class="grid cols-3">${this.data.competitions.map(c=>`<div class="card" style="cursor:pointer" onclick="App.openJudge('${c.id}')"><h3>${c.name}</h3><span class="tag blue">${c.category}</span></div>`).join('')}</div>`; },
@@ -308,7 +332,7 @@ const App = {
         this.openModal(h);
     },
 
-    /* Team Portal Logic (Updated Enrollment) */
+    /* Team Portal Logic (Updated Enrollment + Team Limits) */
     renderTeamStudents(el) {
         const my = this.data.students.filter(s=>s.teamId===this.state.user.id);
         el.innerHTML = `<div class="card"><form class="row" onsubmit="App.addStud(event)"><input id="sn" placeholder="Name" required><input id="sc" placeholder="Chest No" required><select id="sct">${this.data.categories.filter(c=>c!=='GENERAL').map(c=>`<option>${c}</option>`).join('')}</select><button class="btn primary">Add</button></form></div><div class="card"><table><thead><tr><th>#</th><th>Name</th><th>Cat</th><th>Act</th></tr></thead><tbody>${my.map(s=>`<tr><td>${s.chestNo}</td><td>${s.name}</td><td>${s.category}</td><td><button class="btn sm danger" onclick="App.delStud('${s.id}')">X</button></td></tr>`).join('')}</tbody></table></div>`;
@@ -319,13 +343,21 @@ const App = {
         const my = this.data.students.filter(s=>s.teamId===this.state.user.id);
         el.innerHTML = `<div class="grid cols-3">${this.data.competitions.map(c=>{
             const enr = this.data.entries.filter(e=>e.competitionId===c.id && e.teamId===this.state.user.id); const eli = my.filter(s=>c.category==='GENERAL' || s.category===c.category);
-            return `<div class="card"><b>${c.name}</b> <span class="tag blue">${c.category}</span><br><span class="tag gray">${c.type}</span> <span class="tag ${c.isStage?'gold':'green'}">${c.isStage?'Stage':'Off'}</span><div style="margin:10px 0;font-size:0.8rem">${enr.length} / ${c.limit} Slots</div><div style="margin-bottom:10px">${enr.map(e=>`<span class="tag green">${this.data.students.find(x=>x.id===e.memberStudentIds[0]).name} <b style="cursor:pointer" onclick="App.unenroll('${e.id}')">x</b></span>`).join(' ')}</div><form class="row" onsubmit="App.enroll(event,'${c.id}')"><select class="input sm" id="e-${c.id}">${eli.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select><button class="btn sm primary">Join</button></form></div>`;
+            return `<div class="card"><b>${c.name}</b> <span class="tag blue">${c.category}</span><br><span class="tag gray">${c.type}</span> <span class="tag ${c.isStage?'gold':'green'}">${c.isStage?'Stage':'Off'}</span>
+            <div style="margin:10px 0;font-size:0.8rem">${enr.length} / ${c.limit} Slots (Max ${c.teamLimit}/Team)</div>
+            <div style="margin-bottom:10px">${enr.map(e=>`<span class="tag green">${this.data.students.find(x=>x.id===e.memberStudentIds[0]).name} <b style="cursor:pointer" onclick="App.unenroll('${e.id}')">x</b></span>`).join(' ')}</div>
+            <form class="row" onsubmit="App.enroll(event,'${c.id}')"><select class="input sm" id="e-${c.id}">${eli.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select><button class="btn sm primary">Join</button></form></div>`;
         }).join('')}</div>`;
     },
     enroll(e, cid) {
         e.preventDefault(); const sid = document.getElementById(`e-${cid}`).value; if(!sid) return;
         const c = this.data.competitions.find(x=>x.id===cid); const cur = this.data.entries.filter(x=>x.competitionId===cid).length;
-        if(cur >= c.limit) return alert("Full!"); if(this.data.entries.find(x=>x.competitionId===cid && x.memberStudentIds.includes(sid))) return alert("Joined");
+        const teamCur = this.data.entries.filter(x => x.competitionId === cid && x.teamId === this.state.user.id).length;
+        
+        if(cur >= c.limit) return alert("Competition Full!"); 
+        if(teamCur >= c.teamLimit) return alert("Team Limit Reached!");
+        if(this.data.entries.find(x=>x.competitionId===cid && x.memberStudentIds.includes(sid))) return alert("Already Joined");
+
         const sEnr = this.data.entries.filter(x=>x.memberStudentIds.includes(sid));
         if (c.category === 'GENERAL') { if (c.type === 'INDIVIDUAL') { if (sEnr.filter(ent => { const comp = this.data.competitions.find(x=>x.id===ent.competitionId); return comp.category === 'GENERAL' && comp.type === 'INDIVIDUAL'; }).length >= 3) return alert("Limit: 3 General Indiv Events."); } } 
         else { if (c.isStage) { if (sEnr.filter(ent => { const comp = this.data.competitions.find(x=>x.id===ent.competitionId); return comp.category !== 'GENERAL' && comp.isStage; }).length >= 3) return alert("Limit: 3 Stage Events."); } }
