@@ -87,14 +87,14 @@
 "use strict";
 
 const Store = {
-    key: "alif_fest_v14_final",
+    key: "alif_fest_v15_final",
     defaults: () => ({
-        meta: { version: 14 },
+        meta: { version: 15 },
         theme: 'light',
         admin: { username: 'admin', password: '123' },
         teams: [ { id: 't1', name: 'ZARQAN', password: '123' }, { id: 't2', name: 'ASQALAN', password: '123' }, { id: 't3', name: 'ASBAHAN', password: '123' } ],
         categories: ['SUB JUNIOR', 'JUNIOR', 'SENIOR', 'GENERAL'],
-        competitions: [], // {id, name, category, isStage, type:'INDIVIDUAL'|'GROUP', teamLimit: 2} (Removed global limit)
+        competitions: [], // {id, name, category, isStage, type:'INDIVIDUAL'|'GROUP', teamLimit: 2}
         students: [], entries: [], results: [], 
         logo: null,
         chestConfig: { widthCm: 9, heightCm: 13, radius: 0, bgColor: "#ffffff", logo: null, elements: { qr: { x: 50, y: 35, size: 80, color: "#000000", visible: true }, name: { x: 50, y: 65, size: 16, color: "#000000", bold: true, visible: true }, chest: { x: 50, y: 78, size: 28, color: "#4f46e5", bold: true, visible: true }, team: { x: 50, y: 90, size: 12, color: "#64748b", bold: false, visible: true }, fest: { x: 50, y: 10, size: 18, color: "#1e293b", bold: true, text:"ALIF Fest", visible: true }, logo: { x: 50, y: 20, size: 40, visible: false } } }
@@ -171,6 +171,7 @@ const App = {
     },
 
     /* --- ADMIN MODULES --- */
+    
     renderSetup(el) {
         el.innerHTML = `
             <div class="grid cols-2">
@@ -190,7 +191,7 @@ const App = {
     ulData(i){const r=new FileReader();r.onload=e=>{this.data=JSON.parse(e.target.result);Store.save(this.data);location.reload()};r.readAsText(i.files[0])},
     wipe(){if(confirm("Wipe Data?")){this.data.students=[];this.data.entries=[];this.data.results=[];Store.save(this.data);location.reload()}},
 
-    /* COMPETITIONS - Removed Total Limit */
+    /* COMPETITIONS */
     renderComps(el) {
         el.innerHTML = `
             <div class="card"><h3>Create Competition</h3>
@@ -223,7 +224,7 @@ const App = {
     },
     delComp(id){if(confirm("Del?")){this.data.competitions=this.data.competitions.filter(c=>c.id!==id);this.data.entries=this.data.entries.filter(e=>e.competitionId!==id);Store.save(this.data);this.renderTab()}},
 
-    /* JUDGE PANEL - Updated for Groups */
+    /* JUDGE PANEL */
     renderJudge(el) { el.innerHTML=`<div class="grid cols-3">${this.data.competitions.map(c=>`<div class="card" style="cursor:pointer" onclick="App.openJudge('${c.id}')"><h3>${c.name}</h3><span class="tag blue">${c.category}</span></div>`).join('')}</div>`; },
     openJudge(cid) {
         const c = this.data.competitions.find(x=>x.id===cid);
@@ -231,11 +232,9 @@ const App = {
         
         let rows = '';
         if(c.type === 'GROUP') {
-            // Group Logic: Show 1 row per Team
             const teamsInvolved = [...new Set(ents.map(e=>e.teamId))];
             rows = teamsInvolved.map(tid => {
                 const t = this.data.teams.find(x=>x.id===tid);
-                // Use the first entry of this team to get result (assuming synced)
                 const firstEnt = ents.find(e=>e.teamId===tid);
                 const r = this.data.results.find(x=>x.entryId===firstEnt.id) || {};
                 return `<tr>
@@ -249,7 +248,6 @@ const App = {
                 </tr>`;
             }).join('');
         } else {
-            // Individual Logic
             rows = ents.map(e=>{
                 const s = this.data.students.find(x=>x.id===e.memberStudentIds[0]);
                 const r = this.data.results.find(x=>x.entryId===e.id)||{};
@@ -276,31 +274,17 @@ const App = {
         this.data.results=this.data.results.filter(r=>r.entryId!==eid); this.data.results.push({id:Date.now().toString(),competitionId:cid,entryId:eid,rankLabel:rnk,pointsAwarded:pts,attendance:att,codeLetter:cl}); Store.save(this.data);
     },
     svGroupRes(tid, cid){
-        // Update result for ALL entries of this team in this competition
         const teamEnts = this.data.entries.filter(e => e.competitionId === cid && e.teamId === tid);
-        const att = document.getElementById(`att-${tid}`).checked;
-        const rnk = document.getElementById(`rnk-${tid}`).value;
-        const pts = Number(document.getElementById(`pts-${tid}`).value);
-        const cl = document.getElementById(`cl-${tid}`).value.toUpperCase();
-
+        const att = document.getElementById(`att-${tid}`).checked; const rnk = document.getElementById(`rnk-${tid}`).value; const pts = Number(document.getElementById(`pts-${tid}`).value); const cl = document.getElementById(`cl-${tid}`).value.toUpperCase();
         teamEnts.forEach(ent => {
             this.data.results = this.data.results.filter(r => r.entryId !== ent.id);
-            this.data.results.push({
-                id: Date.now().toString() + Math.random(),
-                competitionId: cid,
-                entryId: ent.id,
-                rankLabel: rnk,
-                pointsAwarded: pts,
-                attendance: att,
-                codeLetter: cl
-            });
+            this.data.results.push({ id: Date.now().toString()+Math.random(), competitionId: cid, entryId: ent.id, rankLabel: rnk, pointsAwarded: pts, attendance: att, codeLetter: cl });
         });
-        Store.save(this.data);
-        alert("Group Result Saved!");
+        Store.save(this.data); alert("Group Result Saved!");
     },
     autoCode(cid){ if(confirm("Generate?")){const es=this.data.entries.filter(e=>e.competitionId===cid); const cs="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').sort(()=>0.5-Math.random()); es.forEach((e,i)=>{let r=this.data.results.find(x=>x.entryId===e.id); if(r)r.codeLetter=cs[i%26]; else this.data.results.push({id:Date.now(),competitionId:cid,entryId:e.id,rankLabel:'',pointsAwarded:0,attendance:false,codeLetter:cs[i%26]})}); Store.save(this.data); this.openJudge(cid); } },
 
-    /* Scores */
+    /* Scores: Team Points & Toppers */
     renderScores(el) {
         const d = this.calcScores(); const tops = this.getToppers();
         const topCard = (t, l) => { if(!l.length) return `<div class="card" style="padding:10px;text-align:center;font-size:12px;color:#999">${t}: -</div>`; const s=l[0]; return `<div class="card" style="border:1px solid var(--primary-soft);text-align:center;padding:10px"><div style="font-size:10px;text-transform:uppercase;color:var(--primary);font-weight:bold">${t}</div><div style="font-weight:bold;font-size:14px;margin:4px 0">${s.name}</div><div style="font-size:11px;color:#666">#${s.chest} | ${s.team}</div><div class="tag gold" style="margin-top:5px">${s[t.toLowerCase().includes('non')?'nst':'st']} Pts</div></div>`; };
@@ -316,6 +300,7 @@ const App = {
         const ts={}; this.data.teams.forEach(t=>ts[t.id]={name:t.name,total:0,st:0,nst:0,cats:{}});
         this.data.results.forEach(r=>{
             const e=this.data.entries.find(x=>x.id===r.entryId); if(!e)return; const c=this.data.competitions.find(x=>x.id===e.competitionId);
+            // Team Points: Add everything EXCEPT 3rd Grade. (Group & General OK for teams)
             if(c && r.rankLabel!=='3') { const p=r.pointsAwarded||0; ts[e.teamId].total+=p; if(c.isStage)ts[e.teamId].st+=p; else ts[e.teamId].nst+=p; if(!ts[e.teamId].cats[c.category])ts[e.teamId].cats[c.category]=0; ts[e.teamId].cats[c.category]+=p; }
         }); return Object.values(ts).sort((a,b)=>b.total-a.total);
     },
@@ -323,13 +308,18 @@ const App = {
         const map={}; this.data.categories.filter(c=>c!=='GENERAL').forEach(c=>map[c]={st:[],nst:[]}); const sPts={};
         this.data.results.forEach(r=>{
             const e=this.data.entries.find(x=>x.id===r.entryId); if(!e)return; const c=this.data.competitions.find(x=>x.id===e.competitionId);
-            if(c && c.category!=='GENERAL') { const sid=e.memberStudentIds[0]; if(!sPts[sid]){const s=this.data.students.find(x=>x.id===sid);sPts[sid]={id:sid,st:0,nst:0,cat:s.category,name:s.name,chest:s.chestNo,team:this.data.teams.find(t=>t.id===s.teamId).name}}; if(c.isStage)sPts[sid].st+=r.pointsAwarded||0; else sPts[sid].nst+=r.pointsAwarded||0; }
+            // Individual Points: NO General, NO Group. (3rd Grade OK for indiv)
+            if(c && c.category!=='GENERAL' && c.type!=='GROUP') { 
+                const sid=e.memberStudentIds[0]; 
+                if(!sPts[sid]){const s=this.data.students.find(x=>x.id===sid);sPts[sid]={id:sid,st:0,nst:0,cat:s.category,name:s.name,chest:s.chestNo,team:this.data.teams.find(t=>t.id===s.teamId).name}}; 
+                if(c.isStage)sPts[sid].st+=r.pointsAwarded||0; else sPts[sid].nst+=r.pointsAwarded||0; 
+            }
         });
         Object.values(sPts).forEach(p=>{if(map[p.cat]){if(p.st>0)map[p.cat].st.push(p);if(p.nst>0)map[p.cat].nst.push(p)}});
         Object.keys(map).forEach(c=>{map[c].st.sort((a,b)=>b.st-a.st);map[c].nst.sort((a,b)=>b.nst-a.nst)}); return map;
     },
 
-    /* Chest Card */
+    /* Chest Card Designer */
     renderChest(el) {
         const cfg = this.data.chestConfig;
         el.innerHTML = `
@@ -360,18 +350,20 @@ const App = {
     },
     ccPrintEl(k,c,d){const e=c.elements[k];if(!e.visible)return'';if(k==='logo')return`<img src="${c.logo}" class="cc-el" style="top:${e.y}%;left:${e.x}%;width:${e.size}px">`;const t=k==='fest'?e.text:(k==='name'?d.name:(k==='chest'?d.chest:d.team));return`<div class="cc-el" style="top:${e.y}%;left:${e.x}%;font-size:${e.size}px;color:${e.color};font-weight:${e.bold?'bold':'normal'}">${t}</div>`},
 
-    /* Search & Modals - Updated for Team Search */
+    /* Search & Modals - Updated for Groups & Team Search */
     renderStudentPoints(el) { el.innerHTML = `<div class="row" style="margin-bottom:20px"><h2>Student Points Portal</h2><input class="input" style="width:300px" placeholder="Search Student or Team..." oninput="App.searchPoints(this.value)"></div><div class="card" id="pts-res"><p>Start typing...</p></div>`; },
     searchPoints(q) {
-        if(q.length<2) return; 
-        const ql = q.toLowerCase();
-        // Filter by Student Name, Chest, OR Team Name
+        if(q.length<2) return; const ql = q.toLowerCase();
         const res = this.data.students.filter(s => {
             const tName = this.data.teams.find(t=>t.id===s.teamId).name.toLowerCase();
             return s.name.toLowerCase().includes(ql) || s.chestNo.includes(q) || tName.includes(ql);
         });
         const calcs = res.map(s => {
-            let st=0, nst=0, tot=0; this.data.entries.filter(e=>e.memberStudentIds.includes(s.id)).forEach(e=>{const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);if(c&&c.category!=='GENERAL'&&r){if(c.isStage)st+=(r.pointsAwarded||0);else nst+=(r.pointsAwarded||0);tot+=(r.pointsAwarded||0)}}); return {s, st, nst, tot};
+            let st=0, nst=0, tot=0; this.data.entries.filter(e=>e.memberStudentIds.includes(s.id)).forEach(e=>{
+                const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);
+                // Logic: Not General, Not Group
+                if(c && c.category!=='GENERAL' && c.type!=='GROUP' && r){if(c.isStage)st+=(r.pointsAwarded||0);else nst+=(r.pointsAwarded||0);tot+=(r.pointsAwarded||0)}
+            }); return {s, st, nst, tot};
         });
         document.getElementById('pts-res').innerHTML = `<table><thead><tr><th>Chest</th><th>Name</th><th>Team</th><th>Stage Pts</th><th>Off-Stage Pts</th><th>Total</th></tr></thead><tbody>${calcs.map(x=>`<tr><td>#${x.s.chestNo}</td><td>${x.s.name}</td><td>${this.data.teams.find(t=>t.id===x.s.teamId).name}</td><td>${x.st}</td><td>${x.nst}</td><td><strong>${x.tot}</strong></td></tr>`).join('')}</tbody></table>`;
     },
@@ -389,12 +381,12 @@ const App = {
     },
     viewStud(sid) {
         const s=this.data.students.find(x=>x.id===sid); const enr=this.data.entries.filter(e=>e.memberStudentIds.includes(sid));
-        let st=0,nst=0,tot=0; enr.forEach(e=>{const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);if(c&&c.category!=='GENERAL'&&r){if(c.isStage)st+=(r.pointsAwarded||0);else nst+=(r.pointsAwarded||0);tot+=(r.pointsAwarded||0)}});
+        let st=0,nst=0,tot=0; enr.forEach(e=>{const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);if(c&&c.category!=='GENERAL'&&c.type!=='GROUP'&&r){if(c.isStage)st+=(r.pointsAwarded||0);else nst+=(r.pointsAwarded||0);tot+=(r.pointsAwarded||0)}});
         const h = `<h3>${s.name} (#${s.chestNo})</h3><div class="row" style="margin:10px 0;gap:10px"><div class="tag gold">Total: ${tot}</div><div class="tag blue">Stage: ${st}</div><div class="tag green">Non-Stage: ${nst}</div></div><table><thead><tr><th>Comp</th><th>Result</th><th>Pts</th></tr></thead><tbody>${enr.map(e=>{const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);return `<tr><td>${c.name} (${c.isStage?'S':'NS'})</td><td>${r?r.rankLabel||'-':'-'}</td><td>${r?r.pointsAwarded:0}</td></tr>`}).join('')}</tbody></table><button class="btn" style="margin-top:10px;width:100%" onclick="App.closeModal()">Close</button>`;
         this.openModal(h);
     },
 
-    /* Team Portal Logic (Updated Enrollment + Team Limits) */
+    /* Team Portal Logic */
     renderTeamStudents(el) {
         const my = this.data.students.filter(s=>s.teamId===this.state.user.id);
         el.innerHTML = `<div class="card"><form class="row" onsubmit="App.addStud(event)"><input id="sn" placeholder="Name" required><input id="sc" placeholder="Chest No" required><select id="sct">${this.data.categories.filter(c=>c!=='GENERAL').map(c=>`<option>${c}</option>`).join('')}</select><button class="btn primary">Add</button></form></div><div class="card"><table><thead><tr><th>#</th><th>Name</th><th>Cat</th><th>Act</th></tr></thead><tbody>${my.map(s=>`<tr><td>${s.chestNo}</td><td>${s.name}</td><td>${s.category}</td><td><button class="btn sm danger" onclick="App.delStud('${s.id}')">X</button></td></tr>`).join('')}</tbody></table></div>`;
