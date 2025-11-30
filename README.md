@@ -1,7 +1,5 @@
-# Alif25
-campus Literary Art Fest 
 
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="utf-8" />
