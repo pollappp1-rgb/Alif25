@@ -87,14 +87,14 @@
 "use strict";
 
 const Store = {
-    key: "alif_fest_v13_final",
+    key: "alif_fest_v14_final",
     defaults: () => ({
-        meta: { version: 13 },
+        meta: { version: 14 },
         theme: 'light',
         admin: { username: 'admin', password: '123' },
         teams: [ { id: 't1', name: 'ZARQAN', password: '123' }, { id: 't2', name: 'ASQALAN', password: '123' }, { id: 't3', name: 'ASBAHAN', password: '123' } ],
         categories: ['SUB JUNIOR', 'JUNIOR', 'SENIOR', 'GENERAL'],
-        competitions: [], // {id, name, category, isStage, type:'INDIVIDUAL'|'GROUP', limit: 10, teamLimit: 2}
+        competitions: [], // {id, name, category, isStage, type:'INDIVIDUAL'|'GROUP', teamLimit: 2} (Removed global limit)
         students: [], entries: [], results: [], 
         logo: null,
         chestConfig: { widthCm: 9, heightCm: 13, radius: 0, bgColor: "#ffffff", logo: null, elements: { qr: { x: 50, y: 35, size: 80, color: "#000000", visible: true }, name: { x: 50, y: 65, size: 16, color: "#000000", bold: true, visible: true }, chest: { x: 50, y: 78, size: 28, color: "#4f46e5", bold: true, visible: true }, team: { x: 50, y: 90, size: 12, color: "#64748b", bold: false, visible: true }, fest: { x: 50, y: 10, size: 18, color: "#1e293b", bold: true, text:"ALIF Fest", visible: true }, logo: { x: 50, y: 20, size: 40, visible: false } } }
@@ -145,7 +145,7 @@ const App = {
                     <div class="nav-item" onclick="App.logout()" style="margin-top:auto">🚪 Logout</div>
                 </aside>
                 <main class="main">
-                    <header class="top-bar"><h2>${tabs.find(t=>t.id===this.state.activeTab).l}</h2><div class="row"><button class="btn sm" onclick="App.toggleTheme()">${this.data.theme==='light'?'🌙':'☀️'}</button>${this.state.role==='admin' ? `<button class="btn sm primary" onclick="App.openGlobalScanner()">📷 Scan</button><input class="input sm" style="width:200px" placeholder="Search..." oninput="App.globalSearch(this.value)">` : ''}</div></header>
+                    <header class="top-bar"><h2>${tabs.find(t=>t.id===this.state.activeTab).l}</h2><div class="row"><button class="btn sm" onclick="App.toggleTheme()">${this.data.theme==='light'?'🌙':'☀️'}</button>${this.state.role==='admin' ? `<button class="btn sm primary" onclick="App.openGlobalScanner()">📷 Scan</button><input class="input sm" style="width:250px" placeholder="Search Student/Chest/Comp..." oninput="App.globalSearch(this.value)">` : ''}</div></header>
                     <div class="content" id="content"></div>
                 </main>
             </div>`;
@@ -171,7 +171,6 @@ const App = {
     },
 
     /* --- ADMIN MODULES --- */
-    
     renderSetup(el) {
         el.innerHTML = `
             <div class="grid cols-2">
@@ -191,7 +190,7 @@ const App = {
     ulData(i){const r=new FileReader();r.onload=e=>{this.data=JSON.parse(e.target.result);Store.save(this.data);location.reload()};r.readAsText(i.files[0])},
     wipe(){if(confirm("Wipe Data?")){this.data.students=[];this.data.entries=[];this.data.results=[];Store.save(this.data);location.reload()}},
 
-    /* COMPETITIONS - Added Team Limit */
+    /* COMPETITIONS - Removed Total Limit */
     renderComps(el) {
         el.innerHTML = `
             <div class="card"><h3>Create Competition</h3>
@@ -199,15 +198,14 @@ const App = {
                 <input class="input" id="cn" placeholder="Name" required style="flex:2">
                 <select class="input" id="cc" style="flex:1">${this.data.categories.map(c=>`<option>${c}</option>`).join('')}</select>
                 <select class="input" id="ct" style="flex:1"><option value="INDIVIDUAL">Individual</option><option value="GROUP">Group</option></select>
-                <input class="input" type="number" id="cl" placeholder="Total Limit" style="width:90px" value="20" required title="Total participants allowed">
-                <input class="input" type="number" id="ctl" placeholder="Team Lmt" style="width:90px" value="2" required title="Limit per Team">
+                <input class="input" type="number" id="ctl" placeholder="Team Limit" style="width:100px" value="2" required title="Limit per Team">
                 <label><input type="checkbox" id="cs"> Stage</label>
                 <button class="btn primary">Add</button>
             </form></div>
             <div class="card"><table><thead><tr><th>Name</th><th>Cat</th><th>Type</th><th>Entries</th><th>Action</th></tr></thead><tbody>${this.data.competitions.map(c => {
-                const cnt = this.data.entries.filter(e=>e.competitionId===c.id).length; const pct = Math.min(100, (cnt/c.limit)*100);
+                const cnt = this.data.entries.filter(e=>e.competitionId===c.id).length;
                 return `<tr><td>${c.name}</td><td><span class="tag blue">${c.category}</span></td><td>${c.isStage?'Stage':'Off'} / ${c.type}</td>
-                <td><div style="font-size:11px">${cnt} / ${c.limit} (Max ${c.teamLimit}/Team)</div><div class="progress-bar"><div class="progress-fill ${cnt>=c.limit?'full':''}" style="width:${pct}%"></div></div></td>
+                <td><div style="font-size:11px">${cnt} Enrolled (Max ${c.teamLimit}/Team)</div></td>
                 <td><button class="btn sm danger" onclick="App.delComp('${c.id}')">Del</button></td></tr>`;
             }).join('')}</tbody></table></div>`;
     },
@@ -218,33 +216,91 @@ const App = {
             name:document.getElementById('cn').value,
             category:document.getElementById('cc').value,
             type:document.getElementById('ct').value,
-            limit:Number(document.getElementById('cl').value),
-            teamLimit:Number(document.getElementById('ctl').value), // New
+            teamLimit:Number(document.getElementById('ctl').value),
             isStage:document.getElementById('cs').checked
         });
         Store.save(this.data); this.renderTab();
     },
     delComp(id){if(confirm("Del?")){this.data.competitions=this.data.competitions.filter(c=>c.id!==id);this.data.entries=this.data.entries.filter(e=>e.competitionId!==id);Store.save(this.data);this.renderTab()}},
 
+    /* JUDGE PANEL - Updated for Groups */
     renderJudge(el) { el.innerHTML=`<div class="grid cols-3">${this.data.competitions.map(c=>`<div class="card" style="cursor:pointer" onclick="App.openJudge('${c.id}')"><h3>${c.name}</h3><span class="tag blue">${c.category}</span></div>`).join('')}</div>`; },
     openJudge(cid) {
-        const c = this.data.competitions.find(x=>x.id===cid); const ents = this.data.entries.filter(e=>e.competitionId===cid);
+        const c = this.data.competitions.find(x=>x.id===cid);
+        const ents = this.data.entries.filter(e=>e.competitionId===cid);
+        
+        let rows = '';
+        if(c.type === 'GROUP') {
+            // Group Logic: Show 1 row per Team
+            const teamsInvolved = [...new Set(ents.map(e=>e.teamId))];
+            rows = teamsInvolved.map(tid => {
+                const t = this.data.teams.find(x=>x.id===tid);
+                // Use the first entry of this team to get result (assuming synced)
+                const firstEnt = ents.find(e=>e.teamId===tid);
+                const r = this.data.results.find(x=>x.entryId===firstEnt.id) || {};
+                return `<tr>
+                    <td><span class="tag gold">GROUP</span></td>
+                    <td><input class="input sm" style="width:50px" value="${r.codeLetter||''}" id="cl-${tid}"></td>
+                    <td><strong>${t.name}</strong> (${ents.filter(e=>e.teamId===tid).length} members)</td>
+                    <td><input type="checkbox" id="att-${tid}" ${r.attendance?'checked':''}></td>
+                    <td><input class="input sm" style="width:50px" id="rnk-${tid}" value="${r.rankLabel||''}"></td>
+                    <td><input class="input sm" type="number" style="width:50px" id="pts-${tid}" value="${r.pointsAwarded||0}"></td>
+                    <td><button class="btn sm primary" onclick="App.svGroupRes('${tid}','${cid}')">Save</button></td>
+                </tr>`;
+            }).join('');
+        } else {
+            // Individual Logic
+            rows = ents.map(e=>{
+                const s = this.data.students.find(x=>x.id===e.memberStudentIds[0]);
+                const r = this.data.results.find(x=>x.entryId===e.id)||{};
+                return `<tr>
+                    <td><span class="tag gold">#${s.chestNo}</span></td>
+                    <td><input class="input sm" style="width:50px" value="${r.codeLetter||''}" id="cl-${e.id}"></td>
+                    <td>${s.name}</td>
+                    <td><input type="checkbox" id="att-${e.id}" ${r.attendance?'checked':''}></td>
+                    <td><input class="input sm" style="width:50px" id="rnk-${e.id}" value="${r.rankLabel||''}"></td>
+                    <td><input class="input sm" type="number" style="width:50px" id="pts-${e.id}" value="${r.pointsAwarded||0}"></td>
+                    <td><button class="btn sm primary" onclick="App.svRes('${e.id}','${cid}')">Save</button></td>
+                </tr>`;
+            }).join('');
+        }
+
         const modal = document.getElementById("content");
         modal.innerHTML = `
             <div class="row" style="margin-bottom:20px"><button class="btn" onclick="App.switchTab('judge')">Back</button><h2>${c.name}</h2><div style="flex:1"></div><button class="btn primary" onclick="App.scanAtt('${cid}')">📷 Scan Attendance</button><button class="btn" onclick="App.autoCode('${cid}')">⚡ Codes</button></div>
-            <div class="card"><table><thead><tr><th>Chest</th><th>Code</th><th>Student</th><th>Attended</th><th>Rank</th><th>Pts</th><th>Save</th></tr></thead>
-            <tbody>${ents.map(e=>{
-                const s = this.data.students.find(x=>x.id===e.memberStudentIds[0]); const r = this.data.results.find(x=>x.entryId===e.id)||{};
-                return `<tr><td><span class="tag gold">#${s.chestNo}</span></td><td><input class="input sm" style="width:50px" value="${r.codeLetter||''}" id="cl-${e.id}"></td><td>${s.name}</td><td><input type="checkbox" id="att-${e.id}" ${r.attendance?'checked':''}></td><td><input class="input sm" style="width:50px" id="rnk-${e.id}" value="${r.rankLabel||''}"></td><td><input class="input sm" type="number" style="width:50px" id="pts-${e.id}" value="${r.pointsAwarded||0}"></td><td><button class="btn sm primary" onclick="App.svRes('${e.id}','${cid}')">Save</button></td></tr>`;
-            }).join('')}</tbody></table></div>`;
+            <div class="card"><table><thead><tr><th>ID</th><th>Code</th><th>Participant</th><th>Att</th><th>Rank</th><th>Pts</th><th>Save</th></tr></thead>
+            <tbody>${rows}</tbody></table></div>`;
     },
     svRes(eid,cid){
         const att=document.getElementById(`att-${eid}`).checked; const rnk=document.getElementById(`rnk-${eid}`).value; const pts=Number(document.getElementById(`pts-${eid}`).value); const cl=document.getElementById(`cl-${eid}`).value.toUpperCase();
         this.data.results=this.data.results.filter(r=>r.entryId!==eid); this.data.results.push({id:Date.now().toString(),competitionId:cid,entryId:eid,rankLabel:rnk,pointsAwarded:pts,attendance:att,codeLetter:cl}); Store.save(this.data);
     },
+    svGroupRes(tid, cid){
+        // Update result for ALL entries of this team in this competition
+        const teamEnts = this.data.entries.filter(e => e.competitionId === cid && e.teamId === tid);
+        const att = document.getElementById(`att-${tid}`).checked;
+        const rnk = document.getElementById(`rnk-${tid}`).value;
+        const pts = Number(document.getElementById(`pts-${tid}`).value);
+        const cl = document.getElementById(`cl-${tid}`).value.toUpperCase();
+
+        teamEnts.forEach(ent => {
+            this.data.results = this.data.results.filter(r => r.entryId !== ent.id);
+            this.data.results.push({
+                id: Date.now().toString() + Math.random(),
+                competitionId: cid,
+                entryId: ent.id,
+                rankLabel: rnk,
+                pointsAwarded: pts,
+                attendance: att,
+                codeLetter: cl
+            });
+        });
+        Store.save(this.data);
+        alert("Group Result Saved!");
+    },
     autoCode(cid){ if(confirm("Generate?")){const es=this.data.entries.filter(e=>e.competitionId===cid); const cs="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').sort(()=>0.5-Math.random()); es.forEach((e,i)=>{let r=this.data.results.find(x=>x.entryId===e.id); if(r)r.codeLetter=cs[i%26]; else this.data.results.push({id:Date.now(),competitionId:cid,entryId:e.id,rankLabel:'',pointsAwarded:0,attendance:false,codeLetter:cs[i%26]})}); Store.save(this.data); this.openJudge(cid); } },
 
-    /* Scores: Team Points & Toppers */
+    /* Scores */
     renderScores(el) {
         const d = this.calcScores(); const tops = this.getToppers();
         const topCard = (t, l) => { if(!l.length) return `<div class="card" style="padding:10px;text-align:center;font-size:12px;color:#999">${t}: -</div>`; const s=l[0]; return `<div class="card" style="border:1px solid var(--primary-soft);text-align:center;padding:10px"><div style="font-size:10px;text-transform:uppercase;color:var(--primary);font-weight:bold">${t}</div><div style="font-weight:bold;font-size:14px;margin:4px 0">${s.name}</div><div style="font-size:11px;color:#666">#${s.chest} | ${s.team}</div><div class="tag gold" style="margin-top:5px">${s[t.toLowerCase().includes('non')?'nst':'st']} Pts</div></div>`; };
@@ -273,7 +329,7 @@ const App = {
         Object.keys(map).forEach(c=>{map[c].st.sort((a,b)=>b.st-a.st);map[c].nst.sort((a,b)=>b.nst-a.nst)}); return map;
     },
 
-    /* Chest Card Designer */
+    /* Chest Card */
     renderChest(el) {
         const cfg = this.data.chestConfig;
         el.innerHTML = `
@@ -304,10 +360,16 @@ const App = {
     },
     ccPrintEl(k,c,d){const e=c.elements[k];if(!e.visible)return'';if(k==='logo')return`<img src="${c.logo}" class="cc-el" style="top:${e.y}%;left:${e.x}%;width:${e.size}px">`;const t=k==='fest'?e.text:(k==='name'?d.name:(k==='chest'?d.chest:d.team));return`<div class="cc-el" style="top:${e.y}%;left:${e.x}%;font-size:${e.size}px;color:${e.color};font-weight:${e.bold?'bold':'normal'}">${t}</div>`},
 
-    /* Search & Modals */
-    renderStudentPoints(el) { el.innerHTML = `<div class="row" style="margin-bottom:20px"><h2>Student Points Portal</h2><input class="input" style="width:300px" placeholder="Search Student..." oninput="App.searchPoints(this.value)"></div><div class="card" id="pts-res"><p>Start typing...</p></div>`; },
+    /* Search & Modals - Updated for Team Search */
+    renderStudentPoints(el) { el.innerHTML = `<div class="row" style="margin-bottom:20px"><h2>Student Points Portal</h2><input class="input" style="width:300px" placeholder="Search Student or Team..." oninput="App.searchPoints(this.value)"></div><div class="card" id="pts-res"><p>Start typing...</p></div>`; },
     searchPoints(q) {
-        if(q.length<2) return; const res = this.data.students.filter(s=>s.name.toLowerCase().includes(q.toLowerCase())||s.chestNo.includes(q));
+        if(q.length<2) return; 
+        const ql = q.toLowerCase();
+        // Filter by Student Name, Chest, OR Team Name
+        const res = this.data.students.filter(s => {
+            const tName = this.data.teams.find(t=>t.id===s.teamId).name.toLowerCase();
+            return s.name.toLowerCase().includes(ql) || s.chestNo.includes(q) || tName.includes(ql);
+        });
         const calcs = res.map(s => {
             let st=0, nst=0, tot=0; this.data.entries.filter(e=>e.memberStudentIds.includes(s.id)).forEach(e=>{const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);if(c&&c.category!=='GENERAL'&&r){if(c.isStage)st+=(r.pointsAwarded||0);else nst+=(r.pointsAwarded||0);tot+=(r.pointsAwarded||0)}}); return {s, st, nst, tot};
         });
@@ -344,17 +406,16 @@ const App = {
         el.innerHTML = `<div class="grid cols-3">${this.data.competitions.map(c=>{
             const enr = this.data.entries.filter(e=>e.competitionId===c.id && e.teamId===this.state.user.id); const eli = my.filter(s=>c.category==='GENERAL' || s.category===c.category);
             return `<div class="card"><b>${c.name}</b> <span class="tag blue">${c.category}</span><br><span class="tag gray">${c.type}</span> <span class="tag ${c.isStage?'gold':'green'}">${c.isStage?'Stage':'Off'}</span>
-            <div style="margin:10px 0;font-size:0.8rem">${enr.length} / ${c.limit} Slots (Max ${c.teamLimit}/Team)</div>
+            <div style="margin:10px 0;font-size:0.8rem">${enr.length} / ${c.teamLimit} Slots</div>
             <div style="margin-bottom:10px">${enr.map(e=>`<span class="tag green">${this.data.students.find(x=>x.id===e.memberStudentIds[0]).name} <b style="cursor:pointer" onclick="App.unenroll('${e.id}')">x</b></span>`).join(' ')}</div>
             <form class="row" onsubmit="App.enroll(event,'${c.id}')"><select class="input sm" id="e-${c.id}">${eli.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select><button class="btn sm primary">Join</button></form></div>`;
         }).join('')}</div>`;
     },
     enroll(e, cid) {
         e.preventDefault(); const sid = document.getElementById(`e-${cid}`).value; if(!sid) return;
-        const c = this.data.competitions.find(x=>x.id===cid); const cur = this.data.entries.filter(x=>x.competitionId===cid).length;
+        const c = this.data.competitions.find(x=>x.id===cid); 
         const teamCur = this.data.entries.filter(x => x.competitionId === cid && x.teamId === this.state.user.id).length;
         
-        if(cur >= c.limit) return alert("Competition Full!"); 
         if(teamCur >= c.teamLimit) return alert("Team Limit Reached!");
         if(this.data.entries.find(x=>x.competitionId===cid && x.memberStudentIds.includes(sid))) return alert("Already Joined");
 
