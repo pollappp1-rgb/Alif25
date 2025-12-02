@@ -61,7 +61,7 @@
     .nav-item { padding: 0.75rem; border-radius: 8px; color: var(--text-muted); cursor: pointer; font-weight: 500; margin-bottom: 4px; transition: 0.2s; }
     .nav-item:hover { background: var(--bg-body); color: var(--text-main); } .nav-item.active { background: var(--primary-soft); color: var(--primary); }
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 100; display: none; place-items: center; }
-    .modal-box { background: var(--bg-surface); width: 600px; max-width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; border-radius: var(--radius); box-shadow: var(--shadow); }
+    .modal-box { background: var(--bg-surface); width: 750px; max-width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem; border-radius: var(--radius); box-shadow: var(--shadow); }
 
     /* Utils */
     .progress-bar { width: 100%; height: 6px; background: var(--bg-body); border-radius: 3px; overflow: hidden; margin-top: 5px; border: 1px solid var(--border); }
@@ -87,15 +87,15 @@
 "use strict";
 
 const Store = {
-    key: "alif_fest_v15_final",
+    key: "alif_fest_v18_final",
     defaults: () => ({
-        meta: { version: 15 },
+        meta: { version: 18 },
         theme: 'light',
         admin: { username: 'admin', password: '123' },
         teams: [ { id: 't1', name: 'ZARQAN', password: '123' }, { id: 't2', name: 'ASQALAN', password: '123' }, { id: 't3', name: 'ASBAHAN', password: '123' } ],
         categories: ['SUB JUNIOR', 'JUNIOR', 'SENIOR', 'GENERAL'],
         competitions: [], // {id, name, category, isStage, type:'INDIVIDUAL'|'GROUP', teamLimit: 2}
-        students: [], entries: [], results: [], 
+        students: [], entries: [], results: [], // result: {..., rankLabel, grade, pointsAwarded}
         logo: null,
         chestConfig: { widthCm: 9, heightCm: 13, radius: 0, bgColor: "#ffffff", logo: null, elements: { qr: { x: 50, y: 35, size: 80, color: "#000000", visible: true }, name: { x: 50, y: 65, size: 16, color: "#000000", bold: true, visible: true }, chest: { x: 50, y: 78, size: 28, color: "#4f46e5", bold: true, visible: true }, team: { x: 50, y: 90, size: 12, color: "#64748b", bold: false, visible: true }, fest: { x: 50, y: 10, size: 18, color: "#1e293b", bold: true, text:"ALIF Fest", visible: true }, logo: { x: 50, y: 20, size: 40, visible: false } } }
     }),
@@ -242,8 +242,9 @@ const App = {
                     <td><input class="input sm" style="width:50px" value="${r.codeLetter||''}" id="cl-${tid}"></td>
                     <td><strong>${t.name}</strong> (${ents.filter(e=>e.teamId===tid).length} members)</td>
                     <td><input type="checkbox" id="att-${tid}" ${r.attendance?'checked':''}></td>
-                    <td><input class="input sm" style="width:50px" id="rnk-${tid}" value="${r.rankLabel||''}"></td>
-                    <td><input class="input sm" type="number" style="width:50px" id="pts-${tid}" value="${r.pointsAwarded||0}"></td>
+                    <td><input class="input sm" style="width:50px" id="rnk-${tid}" value="${r.rankLabel||''}" placeholder="1,2,3" oninput="App.autoCalc('${tid}','GROUP')"></td>
+                    <td><input class="input sm" style="width:50px" id="grd-${tid}" value="${r.grade||''}" placeholder="A,B,C" oninput="App.autoCalc('${tid}','GROUP')"></td>
+                    <td><input class="input sm" type="number" style="width:60px" id="pts-${tid}" value="${r.pointsAwarded||0}"></td>
                     <td><button class="btn sm primary" onclick="App.svGroupRes('${tid}','${cid}')">Save</button></td>
                 </tr>`;
             }).join('');
@@ -256,8 +257,9 @@ const App = {
                     <td><input class="input sm" style="width:50px" value="${r.codeLetter||''}" id="cl-${e.id}"></td>
                     <td>${s.name}</td>
                     <td><input type="checkbox" id="att-${e.id}" ${r.attendance?'checked':''}></td>
-                    <td><input class="input sm" style="width:50px" id="rnk-${e.id}" value="${r.rankLabel||''}"></td>
-                    <td><input class="input sm" type="number" style="width:50px" id="pts-${e.id}" value="${r.pointsAwarded||0}"></td>
+                    <td><input class="input sm" style="width:50px" id="rnk-${e.id}" value="${r.rankLabel||''}" placeholder="1,2,3" oninput="App.autoCalc('${e.id}','INDIVIDUAL')"></td>
+                    <td><input class="input sm" style="width:50px" id="grd-${e.id}" value="${r.grade||''}" placeholder="A,B,C" oninput="App.autoCalc('${e.id}','INDIVIDUAL')"></td>
+                    <td><input class="input sm" type="number" style="width:60px" id="pts-${e.id}" value="${r.pointsAwarded||0}"></td>
                     <td><button class="btn sm primary" onclick="App.svRes('${e.id}','${cid}')">Save</button></td>
                 </tr>`;
             }).join('');
@@ -266,23 +268,55 @@ const App = {
         const modal = document.getElementById("content");
         modal.innerHTML = `
             <div class="row" style="margin-bottom:20px"><button class="btn" onclick="App.switchTab('judge')">Back</button><h2>${c.name}</h2><div style="flex:1"></div><button class="btn primary" onclick="App.scanAtt('${cid}')">📷 Scan Attendance</button><button class="btn" onclick="App.autoCode('${cid}')">⚡ Codes</button></div>
-            <div class="card"><table><thead><tr><th>ID</th><th>Code</th><th>Participant</th><th>Att</th><th>Rank</th><th>Pts</th><th>Save</th></tr></thead>
+            <div class="card"><table><thead><tr><th>ID</th><th>Code</th><th>Participant</th><th>Att</th><th>Rank</th><th>Grd</th><th>Pts</th><th>Save</th></tr></thead>
             <tbody>${rows}</tbody></table></div>`;
     },
+    autoCalc(id, type) {
+        const r = document.getElementById(`rnk-${id}`).value;
+        const g = document.getElementById(`grd-${id}`).value.toUpperCase();
+        let pts = 0;
+        // Rank
+        if(type === 'GROUP') { if(r=='1') pts+=10; else if(r=='2') pts+=7; else if(r=='3') pts+=5; }
+        else { if(r=='1') pts+=5; else if(r=='2') pts+=3; else if(r=='3') pts+=1; }
+        // Grade
+        if(g==='A') pts+=5; else if(g==='B') pts+=3; else if(g==='C') pts+=1;
+        document.getElementById(`pts-${id}`).value = pts;
+    },
     svRes(eid,cid){
-        const att=document.getElementById(`att-${eid}`).checked; const rnk=document.getElementById(`rnk-${eid}`).value; const pts=Number(document.getElementById(`pts-${eid}`).value); const cl=document.getElementById(`cl-${eid}`).value.toUpperCase();
-        this.data.results=this.data.results.filter(r=>r.entryId!==eid); this.data.results.push({id:Date.now().toString(),competitionId:cid,entryId:eid,rankLabel:rnk,pointsAwarded:pts,attendance:att,codeLetter:cl}); Store.save(this.data);
+        const att=document.getElementById(`att-${eid}`).checked; const rnk=document.getElementById(`rnk-${eid}`).value; 
+        const grd=document.getElementById(`grd-${eid}`).value.toUpperCase(); const pts=Number(document.getElementById(`pts-${eid}`).value); const cl=document.getElementById(`cl-${eid}`).value.toUpperCase();
+        this.data.results=this.data.results.filter(r=>r.entryId!==eid); 
+        this.data.results.push({id:Date.now().toString(),competitionId:cid,entryId:eid,rankLabel:rnk,grade:grd,pointsAwarded:pts,attendance:att,codeLetter:cl}); 
+        Store.save(this.data);
     },
     svGroupRes(tid, cid){
         const teamEnts = this.data.entries.filter(e => e.competitionId === cid && e.teamId === tid);
-        const att = document.getElementById(`att-${tid}`).checked; const rnk = document.getElementById(`rnk-${tid}`).value; const pts = Number(document.getElementById(`pts-${tid}`).value); const cl = document.getElementById(`cl-${tid}`).value.toUpperCase();
+        const att = document.getElementById(`att-${tid}`).checked; const rnk = document.getElementById(`rnk-${tid}`).value; 
+        const grd = document.getElementById(`grd-${tid}`).value.toUpperCase(); const pts = Number(document.getElementById(`pts-${tid}`).value); const cl = document.getElementById(`cl-${tid}`).value.toUpperCase();
         teamEnts.forEach(ent => {
             this.data.results = this.data.results.filter(r => r.entryId !== ent.id);
-            this.data.results.push({ id: Date.now().toString()+Math.random(), competitionId: cid, entryId: ent.id, rankLabel: rnk, pointsAwarded: pts, attendance: att, codeLetter: cl });
+            this.data.results.push({ id: Date.now().toString()+Math.random(), competitionId: cid, entryId: ent.id, rankLabel: rnk, grade: grd, pointsAwarded: pts, attendance: att, codeLetter: cl });
         });
         Store.save(this.data); alert("Group Result Saved!");
     },
-    autoCode(cid){ if(confirm("Generate?")){const es=this.data.entries.filter(e=>e.competitionId===cid); const cs="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').sort(()=>0.5-Math.random()); es.forEach((e,i)=>{let r=this.data.results.find(x=>x.entryId===e.id); if(r)r.codeLetter=cs[i%26]; else this.data.results.push({id:Date.now(),competitionId:cid,entryId:e.id,rankLabel:'',pointsAwarded:0,attendance:false,codeLetter:cs[i%26]})}); Store.save(this.data); this.openJudge(cid); } },
+    autoCode(cid){ if(confirm("Generate?")){const es=this.data.entries.filter(e=>e.competitionId===cid); const cs="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').sort(()=>0.5-Math.random()); es.forEach((e,i)=>{let r=this.data.results.find(x=>x.entryId===e.id); if(r)r.codeLetter=cs[i%26]; else this.data.results.push({id:Date.now(),competitionId:cid,entryId:e.id,rankLabel:'',grade:'',pointsAwarded:0,attendance:false,codeLetter:cs[i%26]})}); Store.save(this.data); this.openJudge(cid); } },
+
+    /* HELPER: Point Calculation */
+    getPoints(rank, grade, type) {
+        let r = 0, g = 0;
+        // Rank Pts
+        if(type === 'GROUP') { if(rank==='1') r=10; else if(rank==='2') r=7; else if(rank==='3') r=5; }
+        else { if(rank==='1') r=5; else if(rank==='2') r=3; else if(rank==='3') r=1; }
+        // Grade Pts
+        if(grade==='A') g=5; else if(grade==='B') g=3; else if(grade==='C') g=1;
+        
+        return { 
+            rankPts: r, 
+            gradePts: g, 
+            indivTotal: (type==='GROUP' ? 0 : (r+g)), // Grade + Rank for Indiv
+            teamTotal: r // Only Rank for Team (Grade ignored)
+        };
+    },
 
     /* Scores: Team Points & Toppers */
     renderScores(el) {
@@ -300,19 +334,29 @@ const App = {
         const ts={}; this.data.teams.forEach(t=>ts[t.id]={name:t.name,total:0,st:0,nst:0,cats:{}});
         this.data.results.forEach(r=>{
             const e=this.data.entries.find(x=>x.id===r.entryId); if(!e)return; const c=this.data.competitions.find(x=>x.id===e.competitionId);
-            // Team Points: Add everything EXCEPT 3rd Grade. (Group & General OK for teams)
-            if(c && r.rankLabel!=='3') { const p=r.pointsAwarded||0; ts[e.teamId].total+=p; if(c.isStage)ts[e.teamId].st+=p; else ts[e.teamId].nst+=p; if(!ts[e.teamId].cats[c.category])ts[e.teamId].cats[c.category]=0; ts[e.teamId].cats[c.category]+=p; }
+            // TEAM: Only Rank Points. Grade excluded.
+            if(c) { 
+                const pts = this.getPoints(r.rankLabel, r.grade, c.type).teamTotal; // Using teamTotal logic
+                if(pts > 0) {
+                    ts[e.teamId].total+=pts; 
+                    if(c.isStage)ts[e.teamId].st+=pts; else ts[e.teamId].nst+=pts; 
+                    if(!ts[e.teamId].cats[c.category])ts[e.teamId].cats[c.category]=0; ts[e.teamId].cats[c.category]+=pts; 
+                }
+            }
         }); return Object.values(ts).sort((a,b)=>b.total-a.total);
     },
     getToppers() {
         const map={}; this.data.categories.filter(c=>c!=='GENERAL').forEach(c=>map[c]={st:[],nst:[]}); const sPts={};
         this.data.results.forEach(r=>{
             const e=this.data.entries.find(x=>x.id===r.entryId); if(!e)return; const c=this.data.competitions.find(x=>x.id===e.competitionId);
-            // Individual Points: NO General, NO Group. (3rd Grade OK for indiv)
-            if(c && c.category!=='GENERAL' && c.type!=='GROUP') { 
-                const sid=e.memberStudentIds[0]; 
-                if(!sPts[sid]){const s=this.data.students.find(x=>x.id===sid);sPts[sid]={id:sid,st:0,nst:0,cat:s.category,name:s.name,chest:s.chestNo,team:this.data.teams.find(t=>t.id===s.teamId).name}}; 
-                if(c.isStage)sPts[sid].st+=r.pointsAwarded||0; else sPts[sid].nst+=r.pointsAwarded||0; 
+            // INDIVIDUAL: Rank + Grade. Group excluded.
+            if(c && c.category!=='GENERAL') { 
+                const pts = this.getPoints(r.rankLabel, r.grade, c.type).indivTotal;
+                if(pts > 0) {
+                    const sid=e.memberStudentIds[0]; 
+                    if(!sPts[sid]){const s=this.data.students.find(x=>x.id===sid);sPts[sid]={id:sid,st:0,nst:0,cat:s.category,name:s.name,chest:s.chestNo,team:this.data.teams.find(t=>t.id===s.teamId).name}}; 
+                    if(c.isStage)sPts[sid].st+=pts; else sPts[sid].nst+=pts; 
+                }
             }
         });
         Object.values(sPts).forEach(p=>{if(map[p.cat]){if(p.st>0)map[p.cat].st.push(p);if(p.nst>0)map[p.cat].nst.push(p)}});
@@ -361,8 +405,10 @@ const App = {
         const calcs = res.map(s => {
             let st=0, nst=0, tot=0; this.data.entries.filter(e=>e.memberStudentIds.includes(s.id)).forEach(e=>{
                 const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);
-                // Logic: Not General, Not Group
-                if(c && c.category!=='GENERAL' && c.type!=='GROUP' && r){if(c.isStage)st+=(r.pointsAwarded||0);else nst+=(r.pointsAwarded||0);tot+=(r.pointsAwarded||0)}
+                if(c && c.category!=='GENERAL' && c.type!=='GROUP' && r){
+                    const pts = this.getPoints(r.rankLabel, r.grade, c.type).indivTotal;
+                    if(pts > 0) { if(c.isStage)st+=pts; else nst+=pts; tot+=pts; }
+                }
             }); return {s, st, nst, tot};
         });
         document.getElementById('pts-res').innerHTML = `<table><thead><tr><th>Chest</th><th>Name</th><th>Team</th><th>Stage Pts</th><th>Off-Stage Pts</th><th>Total</th></tr></thead><tbody>${calcs.map(x=>`<tr><td>#${x.s.chestNo}</td><td>${x.s.name}</td><td>${this.data.teams.find(t=>t.id===x.s.teamId).name}</td><td>${x.st}</td><td>${x.nst}</td><td><strong>${x.tot}</strong></td></tr>`).join('')}</tbody></table>`;
@@ -381,8 +427,31 @@ const App = {
     },
     viewStud(sid) {
         const s=this.data.students.find(x=>x.id===sid); const enr=this.data.entries.filter(e=>e.memberStudentIds.includes(sid));
-        let st=0,nst=0,tot=0; enr.forEach(e=>{const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);if(c&&c.category!=='GENERAL'&&c.type!=='GROUP'&&r){if(c.isStage)st+=(r.pointsAwarded||0);else nst+=(r.pointsAwarded||0);tot+=(r.pointsAwarded||0)}});
-        const h = `<h3>${s.name} (#${s.chestNo})</h3><div class="row" style="margin:10px 0;gap:10px"><div class="tag gold">Total: ${tot}</div><div class="tag blue">Stage: ${st}</div><div class="tag green">Non-Stage: ${nst}</div></div><table><thead><tr><th>Comp</th><th>Result</th><th>Pts</th></tr></thead><tbody>${enr.map(e=>{const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);return `<tr><td>${c.name} (${c.isStage?'S':'NS'})</td><td>${r?r.rankLabel||'-':'-'}</td><td>${r?r.pointsAwarded:0}</td></tr>`}).join('')}</tbody></table><button class="btn" style="margin-top:10px;width:100%" onclick="App.closeModal()">Close</button>`;
+        let st=0,nst=0,tot=0; 
+        enr.forEach(e=>{
+            const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);
+            if(c&&c.category!=='GENERAL'&&c.type!=='GROUP'&&r){
+                const p=this.getPoints(r.rankLabel, r.grade, c.type).indivTotal;
+                if(p>0){if(c.isStage)st+=p;else nst+=p;tot+=p}
+            }
+        });
+        
+        const h = `<h3>${s.name} (#${s.chestNo})</h3>
+        <div class="row" style="margin:10px 0;gap:10px"><div class="tag gold">Total: ${tot}</div><div class="tag blue">Stage: ${st}</div><div class="tag green">Non-Stage: ${nst}</div></div>
+        <table><thead><tr><th>Comp</th><th>Type</th><th>Rank (Pts)</th><th>Grade (Pts)</th><th>Total</th></tr></thead>
+        <tbody>${enr.map(e=>{
+            const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);
+            if(!r) return `<tr><td>${c.name}</td><td><span class="tag gray">${c.type}</span></td><td>-</td><td>-</td><td>-</td></tr>`;
+            const breakdown = this.getPoints(r.rankLabel, r.grade, c.type);
+            return `<tr>
+                <td>${c.name}</td>
+                <td><span class="tag gray">${c.type}</span></td>
+                <td>${r.rankLabel||'-'} <span style="font-size:0.8em;color:var(--text-muted)">(${breakdown.rankPts})</span></td>
+                <td>${r.grade||'-'} <span style="font-size:0.8em;color:var(--text-muted)">(${breakdown.gradePts})</span></td>
+                <td><b>${c.type==='GROUP'?'0 (Grp)':breakdown.indivTotal}</b></td>
+            </tr>`
+        }).join('')}</tbody></table>
+        <button class="btn" style="margin-top:10px;width:100%" onclick="App.closeModal()">Close</button>`;
         this.openModal(h);
     },
 
@@ -428,7 +497,7 @@ const App = {
     stopScan(){if(this.state.scanner)this.state.scanner.clear();this.closeModal()},
     markAtt(sid,cid){
         const ent=this.data.entries.find(e=>e.competitionId===cid && e.memberStudentIds.includes(sid)); if(!ent)return alert("Not Enrolled");
-        let res=this.data.results.find(r=>r.entryId===ent.id); if(!res)this.data.results.push({id:Date.now(),competitionId:cid,entryId:ent.id,rankLabel:'',pointsAwarded:0,attendance:true,codeLetter:''}); else res.attendance=true; Store.save(this.data); this.openJudge(cid);
+        let res=this.data.results.find(r=>r.entryId===ent.id); if(!res)this.data.results.push({id:Date.now(),competitionId:cid,entryId:ent.id,rankLabel:'',grade:'',pointsAwarded:0,attendance:true,codeLetter:''}); else res.attendance=true; Store.save(this.data); this.openJudge(cid);
     },
     openModal(h){document.getElementById('modal-content').innerHTML=h;document.getElementById('modal-overlay').style.display='grid'},
     closeModal(){document.getElementById('modal-overlay').style.display='none';if(this.state.scanner)this.state.scanner.clear()}
