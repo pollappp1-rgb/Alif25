@@ -87,9 +87,9 @@
 "use strict";
 
 const Store = {
-    key: "alif_fest_v18_final",
+    key: "alif_fest_v19_final",
     defaults: () => ({
-        meta: { version: 18 },
+        meta: { version: 19 },
         theme: 'light',
         admin: { username: 'admin', password: '123' },
         teams: [ { id: 't1', name: 'ZARQAN', password: '123' }, { id: 't2', name: 'ASQALAN', password: '123' }, { id: 't3', name: 'ASBAHAN', password: '123' } ],
@@ -245,7 +245,7 @@ const App = {
                     <td><input class="input sm" style="width:50px" id="rnk-${tid}" value="${r.rankLabel||''}" placeholder="1,2,3" oninput="App.autoCalc('${tid}','GROUP')"></td>
                     <td><input class="input sm" style="width:50px" id="grd-${tid}" value="${r.grade||''}" placeholder="A,B,C" oninput="App.autoCalc('${tid}','GROUP')"></td>
                     <td><input class="input sm" type="number" style="width:60px" id="pts-${tid}" value="${r.pointsAwarded||0}"></td>
-                    <td><button class="btn sm primary" onclick="App.svGroupRes('${tid}','${cid}')">Save</button></td>
+                    <td><button class="btn sm primary" onclick="App.svGroupRes('${tid}','${cid}', this)">Save</button></td>
                 </tr>`;
             }).join('');
         } else {
@@ -260,7 +260,7 @@ const App = {
                     <td><input class="input sm" style="width:50px" id="rnk-${e.id}" value="${r.rankLabel||''}" placeholder="1,2,3" oninput="App.autoCalc('${e.id}','INDIVIDUAL')"></td>
                     <td><input class="input sm" style="width:50px" id="grd-${e.id}" value="${r.grade||''}" placeholder="A,B,C" oninput="App.autoCalc('${e.id}','INDIVIDUAL')"></td>
                     <td><input class="input sm" type="number" style="width:60px" id="pts-${e.id}" value="${r.pointsAwarded||0}"></td>
-                    <td><button class="btn sm primary" onclick="App.svRes('${e.id}','${cid}')">Save</button></td>
+                    <td><button class="btn sm primary" onclick="App.svRes('${e.id}','${cid}', this)">Save</button></td>
                 </tr>`;
             }).join('');
         }
@@ -282,14 +282,15 @@ const App = {
         if(g==='A') pts+=5; else if(g==='B') pts+=3; else if(g==='C') pts+=1;
         document.getElementById(`pts-${id}`).value = pts;
     },
-    svRes(eid,cid){
+    svRes(eid,cid,btn){
         const att=document.getElementById(`att-${eid}`).checked; const rnk=document.getElementById(`rnk-${eid}`).value; 
         const grd=document.getElementById(`grd-${eid}`).value.toUpperCase(); const pts=Number(document.getElementById(`pts-${eid}`).value); const cl=document.getElementById(`cl-${eid}`).value.toUpperCase();
         this.data.results=this.data.results.filter(r=>r.entryId!==eid); 
         this.data.results.push({id:Date.now().toString(),competitionId:cid,entryId:eid,rankLabel:rnk,grade:grd,pointsAwarded:pts,attendance:att,codeLetter:cl}); 
         Store.save(this.data);
+        this.showSaved(btn);
     },
-    svGroupRes(tid, cid){
+    svGroupRes(tid, cid, btn){
         const teamEnts = this.data.entries.filter(e => e.competitionId === cid && e.teamId === tid);
         const att = document.getElementById(`att-${tid}`).checked; const rnk = document.getElementById(`rnk-${tid}`).value; 
         const grd = document.getElementById(`grd-${tid}`).value.toUpperCase(); const pts = Number(document.getElementById(`pts-${tid}`).value); const cl = document.getElementById(`cl-${tid}`).value.toUpperCase();
@@ -297,7 +298,11 @@ const App = {
             this.data.results = this.data.results.filter(r => r.entryId !== ent.id);
             this.data.results.push({ id: Date.now().toString()+Math.random(), competitionId: cid, entryId: ent.id, rankLabel: rnk, grade: grd, pointsAwarded: pts, attendance: att, codeLetter: cl });
         });
-        Store.save(this.data); alert("Group Result Saved!");
+        Store.save(this.data); this.showSaved(btn);
+    },
+    showSaved(btn){
+        const t = btn.innerHTML; btn.innerHTML = "✅ Saved"; btn.style.background = "var(--success)";
+        setTimeout(()=>{btn.innerHTML = t; btn.style.background = "var(--primary)";}, 1000);
     },
     autoCode(cid){ if(confirm("Generate?")){const es=this.data.entries.filter(e=>e.competitionId===cid); const cs="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').sort(()=>0.5-Math.random()); es.forEach((e,i)=>{let r=this.data.results.find(x=>x.entryId===e.id); if(r)r.codeLetter=cs[i%26]; else this.data.results.push({id:Date.now(),competitionId:cid,entryId:e.id,rankLabel:'',grade:'',pointsAwarded:0,attendance:false,codeLetter:cs[i%26]})}); Store.save(this.data); this.openJudge(cid); } },
 
@@ -310,11 +315,12 @@ const App = {
         // Grade Pts
         if(grade==='A') g=5; else if(grade==='B') g=3; else if(grade==='C') g=1;
         
+        const total = r + g;
         return { 
             rankPts: r, 
             gradePts: g, 
-            indivTotal: (type==='GROUP' ? 0 : (r+g)), // Grade + Rank for Indiv
-            teamTotal: r // Only Rank for Team (Grade ignored)
+            indivTotal: (type==='GROUP' ? 0 : total), // Group doesn't count for individual total
+            teamTotal: total // Team counts BOTH Rank + Grade
         };
     },
 
@@ -334,9 +340,9 @@ const App = {
         const ts={}; this.data.teams.forEach(t=>ts[t.id]={name:t.name,total:0,st:0,nst:0,cats:{}});
         this.data.results.forEach(r=>{
             const e=this.data.entries.find(x=>x.id===r.entryId); if(!e)return; const c=this.data.competitions.find(x=>x.id===e.competitionId);
-            // TEAM: Only Rank Points. Grade excluded.
+            // TEAM: Rank + Grade Points count.
             if(c) { 
-                const pts = this.getPoints(r.rankLabel, r.grade, c.type).teamTotal; // Using teamTotal logic
+                const pts = this.getPoints(r.rankLabel, r.grade, c.type).teamTotal;
                 if(pts > 0) {
                     ts[e.teamId].total+=pts; 
                     if(c.isStage)ts[e.teamId].st+=pts; else ts[e.teamId].nst+=pts; 
@@ -405,13 +411,14 @@ const App = {
         const calcs = res.map(s => {
             let st=0, nst=0, tot=0; this.data.entries.filter(e=>e.memberStudentIds.includes(s.id)).forEach(e=>{
                 const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);
+                // EXCLUDE GROUP POINTS from Individual
                 if(c && c.category!=='GENERAL' && c.type!=='GROUP' && r){
                     const pts = this.getPoints(r.rankLabel, r.grade, c.type).indivTotal;
                     if(pts > 0) { if(c.isStage)st+=pts; else nst+=pts; tot+=pts; }
                 }
             }); return {s, st, nst, tot};
         });
-        document.getElementById('pts-res').innerHTML = `<table><thead><tr><th>Chest</th><th>Name</th><th>Team</th><th>Stage Pts</th><th>Off-Stage Pts</th><th>Total</th></tr></thead><tbody>${calcs.map(x=>`<tr><td>#${x.s.chestNo}</td><td>${x.s.name}</td><td>${this.data.teams.find(t=>t.id===x.s.teamId).name}</td><td>${x.st}</td><td>${x.nst}</td><td><strong>${x.tot}</strong></td></tr>`).join('')}</tbody></table>`;
+        document.getElementById('pts-res').innerHTML = `<table><thead><tr><th>Chest</th><th>Name</th><th>Team</th><th>Stage Pts</th><th>Off-Stage Pts</th><th>Total</th><th>Action</th></tr></thead><tbody>${calcs.map(x=>`<tr><td>#${x.s.chestNo}</td><td>${x.s.name}</td><td>${this.data.teams.find(t=>t.id===x.s.teamId).name}</td><td>${x.st}</td><td>${x.nst}</td><td><strong>${x.tot}</strong></td><td><button class="btn sm primary" onclick="App.viewStud('${x.s.id}')">View</button></td></tr>`).join('')}</tbody></table>`;
     },
     renderTeamProgs(el) { el.innerHTML = `<div class="row" style="margin-bottom:20px"><h2>Team Programs</h2><select class="input" style="width:200px" onchange="App.loadTeamList(this.value)"><option value="">Select Team</option>${this.data.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select><button class="btn primary" onclick="window.print()">🖨️ Print</button></div><div id="team-list-view" class="card"><p>Select a team...</p></div>`; },
     loadTeamList(tid) {
