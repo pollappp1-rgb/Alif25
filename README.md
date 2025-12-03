@@ -242,4 +242,250 @@ const App = {
                     <td><strong>${t.name}</strong> (${ents.filter(e=>e.teamId===tid).length} members)</td>
                     <td><input type="checkbox" id="att-${tid}" ${r.attendance?'checked':''}></td>
                     <td><input class="input sm" style="width:50px" id="rnk-${tid}" value="${r.rankLabel||''}" placeholder="1,2,3" oninput="App.autoCalc('${tid}','GROUP')"></td>
-                    
+                    <td><input class="input sm" style="width:60px" id="grd-${tid}" value="${r.grade||''}" placeholder="A+,A,B,C" oninput="App.autoCalc('${tid}','GROUP')"></td>
+                    <td><input class="input sm" type="number" style="width:60px" id="pts-${tid}" value="${r.pointsAwarded||0}"></td>
+                    <td><button class="btn sm primary" onclick="App.svGroupRes('${tid}','${cid}', this)">Save</button></td>
+                </tr>`;
+            }).join('');
+        } else {
+            rows = ents.map(e=>{
+                const s = this.data.students.find(x=>x.id===e.memberStudentIds[0]);
+                const r = this.data.results.find(x=>x.entryId===e.id)||{};
+                return `<tr>
+                    <td><span class="tag gold">#${s.chestNo}</span></td>
+                    <td><input class="input sm" style="width:50px" value="${r.codeLetter||''}" id="cl-${e.id}"></td>
+                    <td>${s.name}</td>
+                    <td><input type="checkbox" id="att-${e.id}" ${r.attendance?'checked':''}></td>
+                    <td><input class="input sm" style="width:50px" id="rnk-${e.id}" value="${r.rankLabel||''}" placeholder="1,2,3" oninput="App.autoCalc('${e.id}','INDIVIDUAL')"></td>
+                    <td><input class="input sm" style="width:60px" id="grd-${e.id}" value="${r.grade||''}" placeholder="A+,A,B,C" oninput="App.autoCalc('${e.id}','INDIVIDUAL')"></td>
+                    <td><input class="input sm" type="number" style="width:60px" id="pts-${e.id}" value="${r.pointsAwarded||0}"></td>
+                    <td><button class="btn sm primary" onclick="App.svRes('${e.id}','${cid}', this)">Save</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        const modal = document.getElementById("content");
+        modal.innerHTML = `
+            <div class="row" style="margin-bottom:20px"><button class="btn" onclick="App.switchTab('judge')">Back</button><h2>${c.name}</h2><div style="flex:1"></div><button class="btn primary" onclick="App.scanAtt('${cid}')">📷 Scan Attendance</button><button class="btn" onclick="App.autoCode('${cid}')">⚡ Codes</button></div>
+            <div class="card"><table><thead><tr><th>ID</th><th>Code</th><th>Participant</th><th>Att</th><th>Rank</th><th>Grd</th><th>Pts</th><th>Save</th></tr></thead>
+            <tbody>${rows}</tbody></table></div>`;
+    },
+    autoCalc(id, type) {
+        const r = document.getElementById(`rnk-${id}`).value;
+        const g = document.getElementById(`grd-${id}`).value.toUpperCase();
+        let pts = 0;
+        // Rank (1, 2, 3)
+        if(type === 'GROUP') { if(r=='1') pts+=10; else if(r=='2') pts+=7; else if(r=='3') pts+=5; }
+        else { if(r=='1') pts+=5; else if(r=='2') pts+=3; else if(r=='3') pts+=1; }
+        // Grade (A+, A, B, C)
+        if(g==='A+') pts+=6; else if(g==='A') pts+=5; else if(g==='B') pts+=3; else if(g==='C') pts+=1;
+        document.getElementById(`pts-${id}`).value = pts;
+    },
+    svRes(eid,cid,btn){
+        const att=document.getElementById(`att-${eid}`).checked; const rnk=document.getElementById(`rnk-${eid}`).value; 
+        const grd=document.getElementById(`grd-${eid}`).value.toUpperCase(); const pts=Number(document.getElementById(`pts-${eid}`).value); const cl=document.getElementById(`cl-${eid}`).value.toUpperCase();
+        this.data.results=this.data.results.filter(r=>r.entryId!==eid); 
+        this.data.results.push({id:Date.now().toString(),competitionId:cid,entryId:eid,rankLabel:rnk,grade:grd,pointsAwarded:pts,attendance:att,codeLetter:cl}); 
+        Store.save(this.data); this.showSaved(btn);
+    },
+    svGroupRes(tid, cid, btn){
+        const teamEnts = this.data.entries.filter(e => e.competitionId === cid && e.teamId === tid);
+        const att = document.getElementById(`att-${tid}`).checked; const rnk = document.getElementById(`rnk-${tid}`).value; 
+        const grd = document.getElementById(`grd-${tid}`).value.toUpperCase(); const pts = Number(document.getElementById(`pts-${tid}`).value); const cl = document.getElementById(`cl-${tid}`).value.toUpperCase();
+        teamEnts.forEach(ent => {
+            this.data.results = this.data.results.filter(r => r.entryId !== ent.id);
+            this.data.results.push({ id: Date.now().toString()+Math.random(), competitionId: cid, entryId: ent.id, rankLabel: rnk, grade: grd, pointsAwarded: pts, attendance: att, codeLetter: cl });
+        });
+        Store.save(this.data); this.showSaved(btn);
+    },
+    showSaved(btn){ const t=btn.innerHTML; btn.innerHTML="✅ Saved"; btn.style.background="var(--success)"; setTimeout(()=>{btn.innerHTML=t;btn.style.background="var(--primary)"},1000); },
+    autoCode(cid){ if(confirm("Generate?")){const es=this.data.entries.filter(e=>e.competitionId===cid); const cs="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').sort(()=>0.5-Math.random()); es.forEach((e,i)=>{let r=this.data.results.find(x=>x.entryId===e.id); if(r)r.codeLetter=cs[i%26]; else this.data.results.push({id:Date.now(),competitionId:cid,entryId:e.id,rankLabel:'',grade:'',pointsAwarded:0,attendance:false,codeLetter:cs[i%26]})}); Store.save(this.data); this.openJudge(cid); } },
+
+    /* Scores */
+    renderScores(el) {
+        const d = this.calcScores(); const tops = this.getToppers();
+        const topCard = (t, l) => { if(!l.length) return `<div class="card" style="padding:10px;text-align:center;font-size:12px;color:#999">${t}: -</div>`; const s=l[0]; return `<div class="card" style="border:1px solid var(--primary-soft);text-align:center;padding:10px"><div style="font-size:10px;text-transform:uppercase;color:var(--primary);font-weight:bold">${t}</div><div style="font-weight:bold;font-size:14px;margin:4px 0">${s.name}</div><div style="font-size:11px;color:#666">#${s.chest} | ${s.team}</div><div class="tag gold" style="margin-top:5px">${s[t.toLowerCase().includes('non')?'nst':'st']} Pts</div></div>`; };
+        el.innerHTML = `
+            <div class="row" style="justify-content:center;margin-bottom:20px">${d[0]?`<div class="card" style="text-align:center;border-top:5px solid gold;transform:scale(1.1)"><h1>${d[0].name}</h1><h2>${d[0].total} Pts</h2><div class="tag gold">CHAMPION</div></div>`:''}</div>
+            <h3>🏆 Category Toppers</h3>
+            <div class="grid cols-3" style="margin-bottom:20px">${Object.keys(tops).map(c => `<div style="display:flex;flex-direction:column;gap:10px"><h4 style="text-align:center">${c}</h4>${topCard('Stage',tops[c].st)}${topCard('Non-Stage',tops[c].nst)}</div>`).join('')}</div>
+            <h3>📊 Team Standings</h3>
+            <div class="card" style="overflow-x:auto"><table><thead><tr><th>Rank</th><th>Team</th><th>Total</th><th>Stage</th><th>Off-Stage</th>${this.data.categories.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+            <tbody>${d.map((t,i)=>`<tr><td>#${i+1}</td><td>${t.name}</td><td><b>${t.total}</b></td><td>${t.st}</td><td>${t.nst}</td>${this.data.categories.map(c=>`<td>${t.cats[c]||0}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    },
+    calcScores() {
+        const ts={}; this.data.teams.forEach(t=>ts[t.id]={name:t.name,total:0,st:0,nst:0,cats:{}});
+        this.data.results.forEach(r=>{
+            const e=this.data.entries.find(x=>x.id===r.entryId); if(!e)return; const c=this.data.competitions.find(x=>x.id===e.competitionId);
+            // TEAM: Add the stored 'pointsAwarded' (Rank + Grade, possibly manually edited)
+            if(c) { 
+                const pts = r.pointsAwarded || 0;
+                if(pts > 0) {
+                    ts[e.teamId].total+=pts; 
+                    if(c.isStage)ts[e.teamId].st+=pts; else ts[e.teamId].nst+=pts; 
+                    if(!ts[e.teamId].cats[c.category])ts[e.teamId].cats[c.category]=0; ts[e.teamId].cats[c.category]+=pts; 
+                }
+            }
+        }); return Object.values(ts).sort((a,b)=>b.total-a.total);
+    },
+    getToppers() {
+        const map={}; this.data.categories.filter(c=>c!=='GENERAL').forEach(c=>map[c]={st:[],nst:[]}); const sPts={};
+        this.data.results.forEach(r=>{
+            const e=this.data.entries.find(x=>x.id===r.entryId); if(!e)return; const c=this.data.competitions.find(x=>x.id===e.competitionId);
+            // INDIVIDUAL: Add stored 'pointsAwarded' (excluding Group)
+            if(c && c.category!=='GENERAL' && c.type!=='GROUP') { 
+                const pts = r.pointsAwarded || 0;
+                if(pts > 0) {
+                    const sid=e.memberStudentIds[0]; 
+                    if(!sPts[sid]){const s=this.data.students.find(x=>x.id===sid);sPts[sid]={id:sid,st:0,nst:0,cat:s.category,name:s.name,chest:s.chestNo,team:this.data.teams.find(t=>t.id===s.teamId).name}}; 
+                    if(c.isStage)sPts[sid].st+=pts; else sPts[sid].nst+=pts; 
+                }
+            }
+        });
+        Object.values(sPts).forEach(p=>{if(map[p.cat]){if(p.st>0)map[p.cat].st.push(p);if(p.nst>0)map[p.cat].nst.push(p)}});
+        Object.keys(map).forEach(c=>{map[c].st.sort((a,b)=>b.st-a.st);map[c].nst.sort((a,b)=>b.nst-a.nst)}); return map;
+    },
+
+    /* Chest Card Designer */
+    renderChest(el) {
+        const cfg = this.data.chestConfig;
+        el.innerHTML = `
+            <div class="grid cols-2">
+                <div class="card" style="max-height:85vh; overflow-y:auto"><h3>🎨 Designer</h3>
+                    <div class="row"><label>Width(cm)<input class="input sm" type="number" value="${cfg.widthCm}" onchange="App.updChest('widthCm',this.value)"></label><label>Height(cm)<input class="input sm" type="number" value="${cfg.heightCm}" onchange="App.updChest('heightCm',this.value)"></label><label>Radius<input class="input sm" type="number" value="${cfg.radius}" onchange="App.updChest('radius',this.value)"></label><label>Bg<input type="color" class="color-inp" value="${cfg.bgColor}" onchange="App.updChest('bgColor',this.value)"></label></div>
+                    <div style="margin:15px 0"><p>Chest Logo</p><input type="file" onchange="App.updChestLogo(this)">${cfg.logo?`<button class="btn sm danger" onclick="App.remChestLogo()">Rm</button>`:''}</div>
+                    ${['fest','name','chest','team','qr','logo'].map(k=>`<div style="background:var(--bg-body);padding:10px;border-radius:8px;margin-bottom:10px"><div class="row" style="justify-content:space-between"><strong style="text-transform:capitalize">${k}</strong><label><input type="checkbox" ${cfg.elements[k].visible?'checked':''} onchange="App.updChest('elements.${k}.visible',this.checked)"> Show</label></div>${cfg.elements[k].visible?`<div class="range-wrap"><span>X</span><input type="range" min="0" max="100" value="${cfg.elements[k].x}" oninput="App.updChest('elements.${k}.x',this.value)"></div><div class="range-wrap"><span>Y</span><input type="range" min="0" max="100" value="${cfg.elements[k].y}" oninput="App.updChest('elements.${k}.y',this.value)"></div><div class="range-wrap"><span>Size</span><input type="range" min="5" max="150" value="${cfg.elements[k].size}" oninput="App.updChest('elements.${k}.size',this.value)"></div>${k!=='qr'&&k!=='logo'?`<div class="row"><label>Color <input type="color" class="color-inp" value="${cfg.elements[k].color}" onchange="App.updChest('elements.${k}.color',this.value)"></label><label><input type="checkbox" ${cfg.elements[k].bold?'checked':''} onchange="App.updChest('elements.${k}.bold',this.checked)"> Bold</label>${k==='fest'?`<input class="input sm" value="${cfg.elements[k].text}" oninput="App.updChest('elements.${k}.text',this.value)">`:''}</div>`:''} `:''}</div>`).join('')}
+                </div>
+                <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-body)"><div id="cc-prev"></div><button class="btn primary" style="margin-top:20px" onclick="App.printChest()">🖨️ Print All</button></div>
+            </div>`; setTimeout(()=>this.renderChestPreview(),100);
+    },
+    updChest(p,v){let o=this.data.chestConfig;const k=p.split('.');for(let i=0;i<k.length-1;i++)o=o[k[i]];o[k[k.length-1]]=(p.includes('visible')||p.includes('bold'))?v:(isNaN(v)||p.includes('color')||p.includes('text')?v:Number(v));Store.save(this.data);this.renderChestPreview()},
+    updChestLogo(i){const r=new FileReader();r.onload=e=>{this.data.chestConfig.logo=e.target.result;Store.save(this.data);this.renderChest(document.getElementById("content"))};if(i.files[0])r.readAsDataURL(i.files[0])},
+    remChestLogo(){this.data.chestConfig.logo=null;Store.save(this.data);this.renderChest(document.getElementById("content"))},
+    renderChestPreview(){
+        const b=document.getElementById("cc-prev");if(!b)return; const c=this.data.chestConfig; const s=3.78; const w=c.widthCm*10*s; const h=c.heightCm*10*s;
+        const d={name:"Student Name",chest:"101",team:"ZARQAN"};
+        b.innerHTML=`<div style="position:relative;width:${w}px;height:${h}px;background:${c.bgColor};border-radius:${c.radius}px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1)">${this.ccEl('fest',c,d)}${this.ccEl('name',c,d)}${this.ccEl('chest',c,d)}${this.ccEl('team',c,d)}${this.ccEl('logo',c,d)}<div id="qr-prev" style="position:absolute;top:${c.elements.qr.y}%;left:${c.elements.qr.x}%;transform:translate(-50%,-50%);display:${c.elements.qr.visible?'block':'none'}"></div></div>`;
+        new QRCode(document.getElementById("qr-prev"),{text:"ID:123",width:c.elements.qr.size,height:c.elements.qr.size,colorDark:c.elements.qr.color,colorLight:"transparent"});
+    },
+    ccEl(k,c,d){const e=c.elements[k];if(!e.visible)return'';if(k==='logo')return`<img src="${c.logo}" style="position:absolute;top:${e.y}%;left:${e.x}%;width:${e.size}px;transform:translate(-50%,-50%)">`;const t=k==='fest'?e.text:(k==='name'?d.name:(k==='chest'?d.chest:d.team));return`<div style="position:absolute;top:${e.y}%;left:${e.x}%;transform:translate(-50%,-50%);font-size:${e.size}px;color:${e.color};font-weight:${e.bold?'bold':'normal'};white-space:nowrap">${t}</div>`},
+    printChest(){
+        const p=document.getElementById("print-area"); const c=this.data.chestConfig;
+        const s=`<style>@media print { .cc-wrap { width:${c.widthCm}cm; height:${c.heightCm}cm; position:relative; display:inline-block; margin:0.2cm; page-break-inside:avoid; background:${c.bgColor}; border-radius:${c.radius}px; overflow:hidden; border:1px dashed #ccc; } .cc-el { position:absolute; transform:translate(-50%,-50%); white-space:nowrap; text-align:center; } }</style>`;
+        const cds=this.data.students.map(st=>{const t=this.data.teams.find(x=>x.id===st.teamId); const d={name:st.name,chest:st.chestNo,team:t.name}; return `<div class="cc-wrap">${this.ccPrintEl('fest',c,d)}${this.ccPrintEl('name',c,d)}${this.ccPrintEl('chest',c,d)}${this.ccPrintEl('team',c,d)}${this.ccPrintEl('logo',c,d)}<div class="cc-el" style="top:${c.elements.qr.y}%;left:${c.elements.qr.x}%;display:${c.elements.qr.visible?'block':'none'}"><div id="q-${st.id}"></div></div></div>`}).join('');
+        p.innerHTML=s+cds; this.data.students.forEach(st=>{const e=document.getElementById(`q-${st.id}`);if(e)new QRCode(e,{text:`ID:${st.id}`,width:c.elements.qr.size,height:c.elements.qr.size,colorDark:c.elements.qr.color,colorLight:"transparent"})}); setTimeout(()=>window.print(),500);
+    },
+    ccPrintEl(k,c,d){const e=c.elements[k];if(!e.visible)return'';if(k==='logo')return`<img src="${c.logo}" class="cc-el" style="top:${e.y}%;left:${e.x}%;width:${e.size}px">`;const t=k==='fest'?e.text:(k==='name'?d.name:(k==='chest'?d.chest:d.team));return`<div class="cc-el" style="top:${e.y}%;left:${e.x}%;font-size:${e.size}px;color:${e.color};font-weight:${e.bold?'bold':'normal'}">${t}</div>`},
+
+    /* Search & Modals - Updated for Groups & Team Search */
+    renderStudentPoints(el) { el.innerHTML = `<div class="row" style="margin-bottom:20px"><h2>Student Points Portal</h2><input class="input" style="width:300px" placeholder="Search Student or Team..." oninput="App.searchPoints(this.value)"></div><div class="card" id="pts-res"><p>Start typing...</p></div>`; },
+    searchPoints(q) {
+        if(q.length<2) return; const ql = q.toLowerCase();
+        const res = this.data.students.filter(s => {
+            const tName = this.data.teams.find(t=>t.id===s.teamId).name.toLowerCase();
+            return s.name.toLowerCase().includes(ql) || s.chestNo.includes(q) || tName.includes(ql);
+        });
+        const calcs = res.map(s => {
+            let st=0, nst=0, tot=0; this.data.entries.filter(e=>e.memberStudentIds.includes(s.id)).forEach(e=>{
+                const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);
+                if(c && c.category!=='GENERAL' && c.type!=='GROUP' && r){
+                    const pts = r.pointsAwarded || 0;
+                    if(pts > 0) { if(c.isStage)st+=pts; else nst+=pts; tot+=pts; }
+                }
+            }); return {s, st, nst, tot};
+        });
+        document.getElementById('pts-res').innerHTML = `<table><thead><tr><th>Chest</th><th>Name</th><th>Team</th><th>Stage Pts</th><th>Off-Stage Pts</th><th>Total</th><th>Action</th></tr></thead><tbody>${calcs.map(x=>`<tr><td>#${x.s.chestNo}</td><td>${x.s.name}</td><td>${this.data.teams.find(t=>t.id===x.s.teamId).name}</td><td>${x.st}</td><td>${x.nst}</td><td><strong>${x.tot}</strong></td><td><button class="btn sm primary" onclick="App.viewStud('${x.s.id}')">View</button></td></tr>`).join('')}</tbody></table>`;
+    },
+    renderTeamProgs(el) { el.innerHTML = `<div class="row" style="margin-bottom:20px"><h2>Team Programs</h2><select class="input" style="width:200px" onchange="App.loadTeamList(this.value)"><option value="">Select Team</option>${this.data.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select><button class="btn primary" onclick="window.print()">🖨️ Print</button></div><div id="team-list-view" class="card"><p>Select a team...</p></div>`; },
+    loadTeamList(tid) {
+        if(!tid) return; const t = this.data.teams.find(x=>x.id===tid); const studs = this.data.students.filter(s=>s.teamId===tid);
+        let html = `<div class="print-section"><h3>${t.name} - Programs</h3><table style="margin-top:15px"><thead><tr><th>Chest</th><th>Student</th><th>Category</th><th>Programs</th></tr></thead><tbody>`;
+        studs.forEach(s => { const enr = this.data.entries.filter(e=>e.memberStudentIds.includes(s.id)); if(enr.length > 0) html += `<tr><td>#${s.chestNo}</td><td>${s.name}</td><td>${s.category}</td><td>${enr.map(e => this.data.competitions.find(c=>c.id===e.competitionId).name).join(', ')}</td></tr>`; });
+        document.getElementById('team-list-view').innerHTML = html + `</tbody></table></div>`;
+    },
+    globalSearch(q) {
+        const el = document.getElementById('content'); if(q.length<2){this.renderTab();return;}
+        const sRes = this.data.students.filter(s=>s.name.toLowerCase().includes(q)||s.chestNo.includes(q)); const cRes = this.data.competitions.filter(c=>c.name.toLowerCase().includes(q));
+        el.innerHTML = `<div class="grid cols-2"><div class="card"><h3>Students</h3>${sRes.map(s=>`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--border);padding:5px"><span><b>${s.name}</b> (#${s.chestNo})</span> <button class="btn sm" onclick="App.viewStud('${s.id}')">View</button></div>`).join('')}</div><div class="card"><h3>Competitions</h3>${cRes.map(c=>`<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--border);padding:5px"><span>${c.name}</span><button class="btn sm primary" onclick="App.openJudge('${c.id}')">Judge</button></div>`).join('')}</div></div>`;
+    },
+    viewStud(sid) {
+        const s=this.data.students.find(x=>x.id===sid); const enr=this.data.entries.filter(e=>e.memberStudentIds.includes(sid));
+        let st=0,nst=0,tot=0; 
+        enr.forEach(e=>{
+            const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);
+            if(c&&c.category!=='GENERAL'&&c.type!=='GROUP'&&r){
+                const p=r.pointsAwarded || 0;
+                if(p>0){if(c.isStage)st+=p;else nst+=p;tot+=p}
+            }
+        });
+        
+        const h = `<h3>${s.name} (#${s.chestNo})</h3>
+        <div class="row" style="margin:10px 0;gap:10px"><div class="tag gold">Total: ${tot}</div><div class="tag blue">Stage: ${st}</div><div class="tag green">Non-Stage: ${nst}</div></div>
+        <table><thead><tr><th>Comp</th><th>Type</th><th>Rank</th><th>Grade</th><th>Total Pts</th></tr></thead>
+        <tbody>${enr.map(e=>{
+            const c=this.data.competitions.find(x=>x.id===e.competitionId);const r=this.data.results.find(x=>x.entryId===e.id);
+            if(!r) return `<tr><td>${c.name}</td><td><span class="tag gray">${c.type}</span></td><td>-</td><td>-</td><td>-</td></tr>`;
+            const p = r.pointsAwarded || 0;
+            return `<tr>
+                <td>${c.name}</td>
+                <td><span class="tag gray">${c.type}</span></td>
+                <td>${r.rankLabel||'-'}</td>
+                <td>${r.grade||'-'}</td>
+                <td><b>${c.type==='GROUP'?'0 (Grp)':p}</b></td>
+            </tr>`
+        }).join('')}</tbody></table>
+        <button class="btn" style="margin-top:10px;width:100%" onclick="App.closeModal()">Close</button>`;
+        this.openModal(h);
+    },
+
+    /* Team Portal Logic */
+    renderTeamStudents(el) {
+        const my = this.data.students.filter(s=>s.teamId===this.state.user.id);
+        el.innerHTML = `<div class="card"><form class="row" onsubmit="App.addStud(event)"><input id="sn" placeholder="Name" required><input id="sc" placeholder="Chest No" required><select id="sct">${this.data.categories.filter(c=>c!=='GENERAL').map(c=>`<option>${c}</option>`).join('')}</select><button class="btn primary">Add</button></form></div><div class="card"><table><thead><tr><th>#</th><th>Name</th><th>Cat</th><th>Act</th></tr></thead><tbody>${my.map(s=>`<tr><td>${s.chestNo}</td><td>${s.name}</td><td>${s.category}</td><td><button class="btn sm danger" onclick="App.delStud('${s.id}')">X</button></td></tr>`).join('')}</tbody></table></div>`;
+    },
+    addStud(e){e.preventDefault();const c=document.getElementById('sc').value;if(this.data.students.find(s=>s.chestNo===c))return alert("Chest Exists");this.data.students.push({id:Date.now().toString(),teamId:this.state.user.id,name:document.getElementById('sn').value,chestNo:c,category:document.getElementById('sct').value});Store.save(this.data);this.renderTab()},
+    delStud(id){if(confirm("Del?")){this.data.students=this.data.students.filter(s=>s.id!==id);Store.save(this.data);this.renderTab()}},
+    renderTeamEnroll(el) {
+        const my = this.data.students.filter(s=>s.teamId===this.state.user.id);
+        el.innerHTML = `<div class="grid cols-3">${this.data.competitions.map(c=>{
+            const enr = this.data.entries.filter(e=>e.competitionId===c.id && e.teamId===this.state.user.id); const eli = my.filter(s=>c.category==='GENERAL' || s.category===c.category);
+            return `<div class="card"><b>${c.name}</b> <span class="tag blue">${c.category}</span><br><span class="tag gray">${c.type}</span> <span class="tag ${c.isStage?'gold':'green'}">${c.isStage?'Stage':'Off'}</span>
+            <div style="margin:10px 0;font-size:0.8rem">${enr.length} / ${c.teamLimit} Slots</div>
+            <div style="margin-bottom:10px">${enr.map(e=>`<span class="tag green">${this.data.students.find(x=>x.id===e.memberStudentIds[0]).name} <b style="cursor:pointer" onclick="App.unenroll('${e.id}')">x</b></span>`).join(' ')}</div>
+            <form class="row" onsubmit="App.enroll(event,'${c.id}')"><select class="input sm" id="e-${c.id}">${eli.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select><button class="btn sm primary">Join</button></form></div>`;
+        }).join('')}</div>`;
+    },
+    enroll(e, cid) {
+        e.preventDefault(); const sid = document.getElementById(`e-${cid}`).value; if(!sid) return;
+        const c = this.data.competitions.find(x=>x.id===cid); 
+        const teamCur = this.data.entries.filter(x => x.competitionId === cid && x.teamId === this.state.user.id).length;
+        
+        if(teamCur >= c.teamLimit) return alert("Team Limit Reached!");
+        if(this.data.entries.find(x=>x.competitionId===cid && x.memberStudentIds.includes(sid))) return alert("Already Joined");
+
+        const sEnr = this.data.entries.filter(x=>x.memberStudentIds.includes(sid));
+        if (c.category === 'GENERAL') { if (c.type === 'INDIVIDUAL') { if (sEnr.filter(ent => { const comp = this.data.competitions.find(x=>x.id===ent.competitionId); return comp.category === 'GENERAL' && comp.type === 'INDIVIDUAL'; }).length >= 3) return alert("Limit: 3 General Indiv Events."); } } 
+        else { if (c.isStage) { if (sEnr.filter(ent => { const comp = this.data.competitions.find(x=>x.id===ent.competitionId); return comp.category !== 'GENERAL' && comp.isStage; }).length >= 3) return alert("Limit: 3 Stage Events."); } }
+        this.data.entries.push({id:Date.now().toString(),competitionId:cid,teamId:this.state.user.id,memberStudentIds:[sid]}); Store.save(this.data); this.renderTab();
+    },
+    unenroll(eid) { this.data.entries=this.data.entries.filter(e=>e.id!==eid); Store.save(this.data); this.renderTab(); },
+
+    /* Scanners */
+    openGlobalScanner(){this.startScan(id=>{this.closeModal();this.viewStud(id)})},
+    scanAtt(cid){this.startScan(id=>{this.closeModal();this.markAtt(id,cid)})},
+    startScan(cb){
+        this.openModal(`<h3>Scanner</h3><div id="rdr"></div><button class="btn danger" style="width:100%" onclick="App.stopScan()">Close</button>`);
+        this.state.scanner=new Html5QrcodeScanner("rdr",{fps:10,qrbox:250}); this.state.scanner.render(txt=>{if(txt.startsWith("ID:")){const id=txt.split(":")[1];if(this.data.students.find(x=>x.id===id)){this.state.scanner.clear();cb(id)}else alert("Not Found")}});
+    },
+    stopScan(){if(this.state.scanner)this.state.scanner.clear();this.closeModal()},
+    markAtt(sid,cid){
+        const ent=this.data.entries.find(e=>e.competitionId===cid && e.memberStudentIds.includes(sid)); if(!ent)return alert("Not Enrolled");
+        let res=this.data.results.find(r=>r.entryId===ent.id); if(!res)this.data.results.push({id:Date.now(),competitionId:cid,entryId:ent.id,rankLabel:'',grade:'',pointsAwarded:0,attendance:true,codeLetter:''}); else res.attendance=true; Store.save(this.data); this.openJudge(cid);
+    },
+    openModal(h){document.getElementById('modal-content').innerHTML=h;document.getElementById('modal-overlay').style.display='grid'},
+    closeModal(){document.getElementById('modal-overlay').style.display='none';if(this.state.scanner)this.state.scanner.clear()}
+};
+App.init();
+</script>
+</body>
+</html>
